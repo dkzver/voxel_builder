@@ -35,3 +35,28 @@ body[data-builder="true"] #hud,body[data-builder="true"] #inventory-panel,body[d
 .build-modal-foot{padding:10px 16px;font-size:8px;flex-direction:column;gap:5px}
 body[data-builder="true"] #build-modal{display:block!important}
 @media(max-width:600px){.build-modal{padding:8px}.build-window{width:min(330px,calc(100vw - 16px));max-height:calc(100vh - 16px)}.build-catalog{max-height:35vh}}
+
+/* Player building dock and placement feedback */
+#player-buildings{position:fixed;z-index:5;left:50%;bottom:18px;transform:translateX(-50%);width:min(900px,calc(100vw - 36px));padding:12px 14px;background:#0b1524ed;border:1px solid #79e5ef55;box-shadow:0 12px 48px #0009;backdrop-filter:blur(14px);pointer-events:auto}
+.player-buildings-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:9px}
+.player-buildings-head small{display:block;color:#7bdce6;font-size:8px;letter-spacing:.18em}
+.player-buildings-head b{display:block;color:#e7f7fa;font-size:11px;letter-spacing:.12em;margin-top:3px}
+.add-building{padding:9px 14px;background:#183d46;border:1px solid #79e5ef99;color:#d9fcff;font-size:10px;letter-spacing:.1em;cursor:pointer}
+.add-building:hover{background:#245865}
+.player-building-list{display:flex;gap:8px;overflow-x:auto;min-height:42px;align-items:stretch}
+.empty-buildings{display:flex;align-items:center;color:#8095a9;font-size:11px;padding:5px}
+.owned-building{flex:0 0 auto;min-width:145px;text-align:left;padding:8px 10px;background:#101f30;border:1px solid #ffffff20;color:#d9e9f2;cursor:pointer}
+.owned-building b{display:block;font-size:10px;font-weight:600}.owned-building small{display:block;margin-top:4px;color:#829bb0;font-size:8px}
+.owned-building.selected{border-color:#79e5ef;background:#173745}
+.build-modal{display:grid!important;place-items:center;padding:16px;background:#07131de0;pointer-events:auto}
+.build-window{width:min(460px,calc(100vw - 28px));max-height:min(82vh,720px);overflow:auto;margin:auto;pointer-events:auto}
+.build-catalog{display:grid;grid-template-columns:1fr 1fr;max-height:58vh;overflow:auto;padding:12px;border:0}
+.build-catalog .module-choice{min-height:58px;margin:3px;padding:9px;border:1px solid #8be7ed20;background:#0d202d80}
+.build-catalog .module-choice:hover{border-color:#78e4ef;background:#1b536055}
+.build-modal-foot{padding:12px 18px}
+.placement-hint{position:fixed;z-index:4;left:50%;top:82px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:10px 15px;background:#0b1725ed;border:1px solid #8bea65;color:#eaffdf;font-size:11px;box-shadow:0 8px 30px #0008;pointer-events:none}
+.placement-hint.invalid{border-color:#ff5364;color:#ffe1e4}
+.placement-hint span{color:#9db2c2;font-size:9px;margin-left:8px}
+.placement-dot{width:9px;height:9px;border-radius:50%;background:#8bea65;box-shadow:0 0 12px currentColor}
+@media(max-width:760px){#player-buildings{bottom:8px;width:calc(100vw - 16px);padding:9px}.owned-building{min-width:125px}.placement-hint{top:65px;width:calc(100vw - 24px);justify-content:center;flex-wrap:wrap}.placement-hint span{width:100%;text-align:center;margin:0}.build-catalog{grid-template-columns:1fr;max-height:60vh}}
+body[data-builder="true"] #build-modal{display:grid!important}
