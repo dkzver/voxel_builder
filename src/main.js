@@ -24,9 +24,9 @@ function draw(m,color,geometry=cube){gl.bindBuffer(gl.ARRAY_BUFFER,geometry.buff
 let viewProjection=matIdentity();
 let seed=92751;function rand(){seed=(seed*16807)%2147483647;return(seed-1)/2147483646;}
 const terrain=[],rocks=[],ores=[],voxelGround=[];
-for(let i=0;i<115;i++){const r=1+rand()*4.8;terrain.push({x:(rand()-.5)*170,z:(rand()-.5)*170,r,y:.12+rand()*.5,rot:rand()*6,color:[.31+rand()*.13,.30+rand()*.13,.29+rand()*.12]});}
-for(let i=0;i<170;i++){const s=.2+rand()*1.0;rocks.push({x:(rand()-.5)*160,z:(rand()-.5)*160,s,color:[.42+rand()*.12,.4+rand()*.12,.38+rand()*.12],rot:rand()*6});}
-for(let i=0;i<22;i++){let x=(rand()-.5)*100,z=(rand()-.5)*100;if(Math.hypot(x,z)<10)x+=18;ores.push({x,z,available:true,phase:rand()*6});}
+for(let i=0;i<115;i++){const a=rand()*Math.PI*2,d=8+rand()*20,r=1+rand()*2.8;terrain.push({x:Math.cos(a)*d,z:Math.sin(a)*d,r,y:.12+rand()*.5,rot:rand()*6,color:[.31+rand()*.13,.30+rand()*.13,.29+rand()*.12]});}
+for(let i=0;i<170;i++){const a=rand()*Math.PI*2,d=12+rand()*22,s=.2+rand()*.8;rocks.push({x:Math.cos(a)*d,z:Math.sin(a)*d,s,color:[.42+rand()*.12,.4+rand()*.12,.38+rand()*.12],rot:rand()*6});}
+for(let i=0;i<22;i++){const a=rand()*Math.PI*2,d=12+rand()*15;ores.push({x:Math.cos(a)*d,z:Math.sin(a)*d,available:true,phase:rand()*6});}
 // Hand-built voxel asteroid surface: stepped shelves, a flatter starter-base plateau and a rocky perimeter.
 for(let gx=-10;gx<=10;gx++)for(let gz=-10;gz<=10;gz++){const x=gx*3,z=gz*3,r=Math.hypot(x,z);if(r>30)continue;const n=Math.sin(gx*1.71+gz*.63)*.22+Math.cos(gz*1.27-gx*.42)*.18;const h=r<12?.72:Math.max(.55,1.05+(r-12)*.045+n);const shade=.31+((gx*7+gz*11+210)%5)*.018;voxelGround.push({x,y:-.35+h/2,z,h,color:[shade,shade*.98,shade*.94]});}
 const state={running:false,paused:false,energy:100,ore:0,yaw:0,velocity:0,maxSpeed:12,};
@@ -41,7 +41,7 @@ const moduleCatalog={
 };
 let selectedModule="habitat",moduleRotation=0;
 let baseModules=[];
-try{const saved=JSON.parse(localStorage.getItem("lunar-base-modules-v1")||"null");if(Array.isArray(saved))baseModules=saved.filter(m=>moduleCatalog[m.type]&&Number.isFinite(m.x)&&Number.isFinite(m.z));else baseModules=[{id:"starter-habitat",type:"habitat",x:0,z:0,rotation:0},{id:"starter-solar-a",type:"solar",x:-5,z:0,rotation:0},{id:"starter-storage",type:"storage",x:4,z:0,rotation:0},{id:"starter-lab",type:"lab",x:0,z:-5,rotation:0}];}catch(_){baseModules=[{id:"starter-habitat",type:"habitat",x:0,z:0,rotation:0},{id:"starter-solar-a",type:"solar",x:-5,z:0,rotation:0},{id:"starter-storage",type:"storage",x:4,z:0,rotation:0},{id:"starter-lab",type:"lab",x:0,z:-5,rotation:0}];}
+try{const saved=JSON.parse(localStorage.getItem("lunar-base-modules-v1")||"null");if(Array.isArray(saved)&&saved.length>0)baseModules=saved.filter(m=>moduleCatalog[m.type]&&Number.isFinite(m.x)&&Number.isFinite(m.z));else baseModules=[{id:"starter-habitat",type:"habitat",x:0,z:0,rotation:0},{id:"starter-solar-a",type:"solar",x:-5,z:0,rotation:0},{id:"starter-storage",type:"storage",x:4,z:0,rotation:0},{id:"starter-lab",type:"lab",x:0,z:-5,rotation:0}];}catch(_){baseModules=[{id:"starter-habitat",type:"habitat",x:0,z:0,rotation:0},{id:"starter-solar-a",type:"solar",x:-5,z:0,rotation:0},{id:"starter-storage",type:"storage",x:4,z:0,rotation:0},{id:"starter-lab",type:"lab",x:0,z:-5,rotation:0}];}
 function persistBase(){try{localStorage.setItem("lunar-base-modules-v1",JSON.stringify(baseModules));}catch(_){showToast("Не удалось сохранить базу (storage unavailable)");}}
 function updateBuildCount(){const el=document.querySelector("#build-count");if(el)el.textContent="Построек: "+baseModules.length;}
 function selectModule(type){if(!moduleCatalog[type])return;selectedModule=type;document.querySelectorAll(".module-choice").forEach(b=>b.classList.toggle("active",b.dataset.module===type));}
