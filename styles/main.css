@@ -24,3 +24,14 @@
 .build-instructions{display:flex;flex-wrap:wrap;gap:10px;padding:12px;background:#0c1c29;border:1px solid #78e4ef33;font-size:11px}.build-instructions i{width:8px;height:8px;border-radius:50%;background:#78e4ef}.build-instructions span{width:100%;font-size:10px;color:#8caebb}.build-info{display:flex;gap:35px;margin:auto 0;padding:28px 5px}.build-info div{display:flex;flex-direction:column;gap:8px}.build-info b{font-size:14px}.build-toolbar{display:flex;gap:8px}.build-toolbar button{width:auto;flex:1;margin:0;padding:12px 8px;border-color:#78e4ef55;color:#bdeff2;font-size:9px}.build-modal-foot{display:flex;justify-content:space-between;padding:14px 28px;border-top:1px solid #8be7ed25;color:#7195a4;font-size:9px;letter-spacing:.12em}.menu-link{display:block;text-align:center;text-decoration:none;margin-top:10px}
 body[data-builder="true"] #hud,body[data-builder="true"] #inventory-panel,body[data-builder="true"] #ore-radar,body[data-builder="true"] .build-launcher{display:none!important}body[data-builder="true"] #build-modal{display:grid!important;background:#07131d66;backdrop-filter:none}
 @media(max-width:720px){.build-layout{grid-template-columns:1fr}.build-catalog{display:grid;grid-template-columns:1fr 1fr;border-right:0;border-bottom:1px solid #8be7ed25}.build-catalog .module-choice{padding:7px}.build-info{gap:14px;padding:18px 0}.build-info b{font-size:11px}.build-workspace{padding:12px}.build-modal-foot{flex-direction:column}}
+
+/* Keep the map interactive around the compact floating construction dock. */
+.build-modal{display:block;padding:18px;pointer-events:none;background:linear-gradient(90deg,#07131dbb 0%,#07131d22 55%,transparent 100%)}
+.build-window{width:min(360px,calc(100vw - 28px));max-height:calc(100vh - 36px);margin:0;pointer-events:auto}
+.build-modal-head{padding:17px}.build-modal-head h2{font-size:20px}.build-modal-head p{line-height:1.45}
+.build-layout{display:flex;flex-direction:column;min-height:0}.build-catalog{display:grid;grid-template-columns:1fr;max-height:42vh;overflow:auto;border-right:0;border-bottom:1px solid #8be7ed25;padding:8px}
+.build-catalog .module-choice{padding:7px;margin:2px 0}.build-catalog .module-icon{width:27px;height:27px;font-size:18px}
+.build-workspace{padding:12px}.build-info{gap:16px;padding:16px 2px}.build-info b{font-size:11px}.build-toolbar{flex-wrap:wrap}.build-toolbar button{min-width:90px}
+.build-modal-foot{padding:10px 16px;font-size:8px;flex-direction:column;gap:5px}
+body[data-builder="true"] #build-modal{display:block!important}
+@media(max-width:600px){.build-modal{padding:8px}.build-window{width:min(330px,calc(100vw - 16px));max-height:calc(100vh - 16px)}.build-catalog{max-height:35vh}}
