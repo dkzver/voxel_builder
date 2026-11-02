@@ -30,15 +30,16 @@ for(let gx=-36;gx<=36;gx++)for(let gz=-36;gz<=36;gz++){const x=gx*VOX,z=gz*VOX,r
 for(let i=0;i<230;i++){const a=rand()*Math.PI*2,d=10+rand()*19,v=.18+rand()*.42;rocks.push({x:Math.round(Math.cos(a)*d/VOX)*VOX,z:Math.round(Math.sin(a)*d/VOX)*VOX,s:v,color:[.34+rand()*.08,.33+rand()*.08,.32+rand()*.08]});}
 for(let i=0;i<24;i++){const a=rand()*Math.PI*2,d=9+rand()*17,cx=Math.round(Math.cos(a)*d/VOX)*VOX,cz=Math.round(Math.sin(a)*d/VOX)*VOX,cells=[],count=1+Math.floor(rand()*4);for(let j=0;j<count;j++)cells.push({x:cx+(j%2)*VOX,z:cz+Math.floor(j/2)*VOX,y:.62});ores.push({x:cx,z:cz,cells,available:true,phase:rand()*6});}
 // Mountain behind the starter base, with a cave-like hangar carved into its front face.
-for(let gx=-15;gx<=15;gx++)for(let gz=-26;gz<=-7;gz++){const x=gx*VOX,z=gz*VOX,nx=Math.abs(x)/13,nz=Math.abs(z+14)/10,profile=1-nx*.72-nz*.58;if(profile<=0)continue;const top=Math.max(1,Math.floor((2+profile*9)/VOX));for(let gy=0;gy<top;gy++){const y=(gy+.5)*VOX,cave=Math.abs(x)<6.25&&z>-18.2&&z<-5.3&&y<4.25;if(cave)continue;const shade=.29+((gx*3+gz*5+gy*7+900)%6)*.012;mountainVoxels.push({x,y,z,color:[shade,shade*.98,shade*.94]});}}
+for(let gx=-15;gx<=15;gx++)for(let gz=-26;gz<=-7;gz++){const x=gx*VOX,z=gz*VOX,nx=Math.abs(x)/13,nz=Math.abs(z+14)/10,profile=1-nx*.72-nz*.58;if(profile<=0)continue;const top=Math.max(1,Math.floor((2+profile*9)/VOX));for(let gy=0;gy<top;gy++){const y=(gy+.5)*VOX,cave=Math.abs(x)<6.25&&z>-21.2&&z<-5.3&&y<4.25;if(cave)continue;const shade=.29+((gx*3+gz*5+gy*7+900)%6)*.012;mountainVoxels.push({x,y,z,color:[shade,shade*.98,shade*.94]});}}
 // Batch terrain and mountain voxels by flat material to avoid thousands of WebGL draw calls.
 const voxelBatchMap=new Map();
 for(const b of voxelGround){const c=b.color,k=c.join(",");if(!voxelBatchMap.has(k))voxelBatchMap.set(k,{color:c,data:[]});const d=voxelBatchMap.get(k).data;for(let i=0;i<cubeData.length;i+=3)d.push(b.x+cubeData[i]*VOX/2,b.y+cubeData[i+1]*b.h/2,b.z+cubeData[i+2]*VOX/2);}
 for(const b of mountainVoxels){const c=b.color,k=c.join(",");if(!voxelBatchMap.has(k))voxelBatchMap.set(k,{color:c,data:[]});const d=voxelBatchMap.get(k).data;for(let i=0;i<cubeData.length;i+=3)d.push(b.x+cubeData[i]*VOX/2,b.y+cubeData[i+1]*VOX/2,b.z+cubeData[i+2]*VOX/2);}
 const voxelBatches=[...voxelBatchMap.values()].map(b=>({color:b.color,geometry:mesh(b.data)}));
-const state={running:false,paused:false,energy:100,ore:0,yaw:0,velocity:0,maxSpeed:12,direction:0,stepTimer:0};
-const cameraFollow={x:0,z:0};
-const rover={x:0,z:10};
+const state={running:false,paused:false,energy:100,ore:0,yaw:Math.PI,velocity:0,maxSpeed:12,direction:2,stepTimer:0};
+const departure={active:false,elapsed:0,door:0};
+const cameraFollow={x:0,z:-10.5};
+const rover={x:0,z:-10.5};
 // === Base construction system: static-client only, persisted in localStorage ===
 const moduleCatalog={
  habitat:{label:"Жилой модуль",color:[.72,.76,.72],size:[1.45,1.05,1.45]},
@@ -48,8 +49,8 @@ const moduleCatalog={
 };
 let selectedModule="habitat",moduleRotation=0;
 let baseModules=[];
-try{const saved=JSON.parse(localStorage.getItem("lunar-base-modules-v2")||"null");if(Array.isArray(saved)&&saved.length>0)baseModules=saved.filter(m=>moduleCatalog[m.type]&&Number.isFinite(m.x)&&Number.isFinite(m.z));else baseModules=[{id:"starter-habitat",type:"habitat",x:0,z:-10,rotation:0},{id:"starter-solar-a",type:"solar",x:-5,z:-10,rotation:0},{id:"starter-storage",type:"storage",x:4,z:-10,rotation:0},{id:"starter-lab",type:"lab",x:0,z:-15,rotation:0}];}catch(_){baseModules=[{id:"starter-habitat",type:"habitat",x:0,z:-10,rotation:0},{id:"starter-solar-a",type:"solar",x:-5,z:-10,rotation:0},{id:"starter-storage",type:"storage",x:4,z:-10,rotation:0},{id:"starter-lab",type:"lab",x:0,z:-15,rotation:0}];}
-function persistBase(){try{localStorage.setItem("lunar-base-modules-v2",JSON.stringify(baseModules));}catch(_){showToast("Не удалось сохранить базу (storage unavailable)");}}
+try{const saved=JSON.parse(localStorage.getItem("lunar-base-modules-v3")||"null");if(Array.isArray(saved)&&saved.length>0)baseModules=saved.filter(m=>moduleCatalog[m.type]&&Number.isFinite(m.x)&&Number.isFinite(m.z));else baseModules=[{id:"starter-habitat",type:"habitat",x:-3.2,z:-14.2,rotation:0},{id:"starter-solar-a",type:"solar",x:-5.2,z:-14.2,rotation:0},{id:"starter-storage",type:"storage",x:-1.1,z:-14.2,rotation:0},{id:"starter-lab",type:"lab",x:-3.2,z:-18,rotation:0}];}catch(_){baseModules=[{id:"starter-habitat",type:"habitat",x:-3.2,z:-14.2,rotation:0},{id:"starter-solar-a",type:"solar",x:-5.2,z:-14.2,rotation:0},{id:"starter-storage",type:"storage",x:-1.1,z:-14.2,rotation:0},{id:"starter-lab",type:"lab",x:-3.2,z:-18,rotation:0}];}
+function persistBase(){try{localStorage.setItem("lunar-base-modules-v3",JSON.stringify(baseModules));}catch(_){showToast("Не удалось сохранить базу (storage unavailable)");}}
 function updateBuildCount(){const el=document.querySelector("#build-count");if(el)el.textContent="Построек: "+baseModules.length;}
 function selectModule(type){if(!moduleCatalog[type])return;selectedModule=type;document.querySelectorAll(".module-choice").forEach(b=>b.classList.toggle("active",b.dataset.module===type));}
 document.querySelectorAll(".module-choice").forEach(b=>b.addEventListener("click",()=>selectModule(b.dataset.module)));
@@ -106,12 +107,18 @@ function drawBaseModule(m){
 function drawOutpost(){
  const b=(x,y,z,sx,sy,sz,c,r=0)=>draw(model(x,y,z,sx,sy,sz,r),c);
  const steel=[.31,.36,.39],pale=[.72,.72,.65],amber=[.9,.57,.23],cyan=[.12,.65,.72],rubber=[.12,.14,.16];
+ // Hangar floor, wheel guides and interior service lamps.
+ b(0,.10,-11,5.35,.10,8.2,[.24,.27,.29]);
+ for(let side of [-1,1]){b(side*1.25,.17,-10.8,.09,.08,7.1,amber);b(side*2.35,.20,-11.2,.12,.12,7.7,steel);}
+ for(let z=-14;z<=-8;z+=2){b(-2.55,2.2,z,.12,.12,.12,amber);b(2.55,2.2,z,.12,.12,.12,amber);}
  // Landing apron and painted guidance markings.
  b(9,.1,8,4.35,.12,4.35,[.22,.25,.27]);
  // Driveway at the mountain foot, linking the hangar mouth and rover apron.
  for(let i=0;i<19;i++){const z=-6+i*.78;b(0,.10,z,2.7,.09,.36,[.38,.4,.39]);b(-2.9,.17,z,.08,.16,.08,amber);b(2.9,.17,z,.08,.16,.08,amber);}
  // Block-framed hangar entrance and guidance lamps.
  b(-5.9,2.25,-6,.18,2.25,.18,steel);b(5.9,2.25,-6,.18,2.25,.18,steel);b(0,4.45,-6,5.9,.18,.18,steel);for(let i=-4;i<=4;i+=2)b(i,3.95,-5.82,.16,.16,.16,cyan);
+ // Sliding voxel garage shutter lifts while the rover prepares to leave.
+ b(0,2.18+departure.door*2.05,-5.72,5.25,.13,.16,amber);
  b(9,.19,8,3.72,.035,3.72,[.36,.39,.39]);
  for(let i=0;i<12;i++){const a=i*Math.PI/6;b(9+Math.cos(a)*3.35,.24,8+Math.sin(a)*3.35,.34,.045,.12,amber,a);}
  b(9,.27,8,.18,.04,.18,pale);
@@ -145,13 +152,13 @@ updateBuildCount();
 
 const keys=new Set();
 function turnRover(dir){state.direction=(state.direction+dir+4)%4;state.yaw=state.direction*Math.PI/2;state.velocity=0;}
-addEventListener("keydown",e=>{if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code))e.preventDefault();if(e.code==="Escape")togglePause();if(e.code==="KeyE"&&state.running&&!state.paused)mine();if(!state.running||state.paused)return;if(!e.repeat&&(e.code==="KeyA"||e.code==="ArrowLeft"))turnRover(-1);if(!e.repeat&&(e.code==="KeyD"||e.code==="ArrowRight"))turnRover(1);if(["KeyW","ArrowUp","KeyS","ArrowDown"].includes(e.code))keys.add(e.code);});addEventListener("keyup",e=>keys.delete(e.code));
+addEventListener("keydown",e=>{if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code))e.preventDefault();if(e.code==="Escape")togglePause();if(e.code==="KeyE"&&state.running&&!state.paused&&!departure.active)mine();if(!state.running||state.paused||departure.active)return;if(!e.repeat&&(e.code==="KeyA"||e.code==="ArrowLeft"))turnRover(-1);if(!e.repeat&&(e.code==="KeyD"||e.code==="ArrowRight"))turnRover(1);if(["KeyW","ArrowUp","KeyS","ArrowDown"].includes(e.code))keys.add(e.code);});addEventListener("keyup",e=>keys.delete(e.code));
 // Fixed isometric camera: no mouse look and no pointer lock.
 const menu=document.querySelector("#menu"),pause=document.querySelector("#pause"),settings=document.querySelector("#settings"),toast=document.querySelector("#toast");let toastTimer;
 function showToast(s){toast.textContent=s;toast.style.opacity="1";clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.style.opacity="0",1700);}
-function start(){state.running=true;state.paused=false;menu.classList.add("hidden");pause.classList.add("hidden");settings.classList.add("hidden");document.querySelector("#objective").textContent="Найдите залежи минералов и добудьте ресурсы";}
+function start(){state.running=true;state.paused=false;keys.clear();rover.x=0;rover.z=-10.5;cameraFollow.x=rover.x;cameraFollow.z=rover.z;state.yaw=Math.PI;state.direction=2;state.velocity=0;state.stepTimer=0;departure.active=true;departure.elapsed=0;departure.door=0;menu.classList.add("hidden");pause.classList.add("hidden");settings.classList.add("hidden");document.querySelector("#objective").textContent="Выезд из ангара: автоматическая последовательность";showToast("Открывается гараж. Подготовка к выезду…");}
 function togglePause(){if(!state.running)return;state.paused=!state.paused;pause.classList.toggle("hidden",!state.paused);}
-function quit(){state.running=false;state.paused=false;pause.classList.add("hidden");menu.classList.remove("hidden");}
+function quit(){state.running=false;state.paused=false;departure.active=false;keys.clear();pause.classList.add("hidden");menu.classList.remove("hidden");}
 function mine(){let nearest=null,distance=2.4;ores.forEach(n=>{const d=Math.hypot(n.x-rover.x,n.z-rover.z);if(n.available&&d<distance){nearest=n;distance=d;}});if(!nearest){showToast("Нет залежей поблизости");return;}nearest.available=false;state.ore+=nearest.cells.length*6;state.energy=Math.max(0,state.energy-3);document.querySelector("#ore").textContent=state.ore;document.querySelector("#energy").textContent=Math.round(state.energy);showToast("Месторождение добыто: "+nearest.cells.length+" блок.");document.querySelector("#objective").textContent=state.ore>=60?"Цель выполнена: ресурсы собраны":"Продолжайте сбор минералов";}
 
 document.querySelector("#start-btn").onclick=start;document.querySelector("#resume-btn").onclick=togglePause;document.querySelector("#quit-btn").onclick=quit;
@@ -163,7 +170,20 @@ function resize(){const dpr=Math.min(devicePixelRatio||1,1.5);canvas.width=Math.
 gl.enable(gl.DEPTH_TEST);gl.clearColor(.035,.05,.085,1);
 let previous=performance.now();
 function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous)/1000,.05);previous=now;
-if(state.running&&!state.paused){const forward=(keys.has("KeyW")||keys.has("ArrowUp")?1:0)-(keys.has("KeyS")||keys.has("ArrowDown")?1:0);const step=VOX;state.velocity=forward*state.maxSpeed;if(forward!==0){state.stepTimer+=dt;const interval=Math.max(.09,3.2/state.maxSpeed);while(state.stepTimer>=interval){rover.x-=Math.sin(state.yaw)*step*forward;rover.z-=Math.cos(state.yaw)*step*forward;state.stepTimer-=interval;}}else state.stepTimer=0;document.querySelector("#speed").textContent=Math.round(Math.abs(state.velocity)*3.6);if(forward!==0)state.energy=Math.max(0,state.energy-dt*.035);document.querySelector("#energy").textContent=Math.round(state.energy);}
+if(state.running&&!state.paused){
+ if(departure.active){
+  departure.elapsed+=dt;
+  departure.door=Math.min(1,departure.elapsed/1.25);
+  const t=Math.max(0,Math.min(1,(departure.elapsed-1.25)/4.1)),ease=t*t*(3-2*t);
+  rover.x=0;rover.z=-10.5+13*ease;state.yaw=Math.PI;state.velocity=t<1?state.maxSpeed*.35:0;
+  document.querySelector("#speed").textContent=Math.round(Math.abs(state.velocity)*3.6);
+  if(departure.elapsed>=5.35){departure.active=false;departure.door=1;rover.z=2.5;state.velocity=0;keys.clear();document.querySelector("#speed").textContent="0";document.querySelector("#objective").textContent="Выезд завершён. Исследуйте поверхность и добывайте ресурсы";showToast("Луноход у подножья горы. Управление доступно.");}
+ }else{
+  const forward=(keys.has("KeyW")||keys.has("ArrowUp")?1:0)-(keys.has("KeyS")||keys.has("ArrowDown")?1:0);const step=VOX;state.velocity=forward*state.maxSpeed;
+  if(forward!==0){state.stepTimer+=dt;const interval=Math.max(.09,3.2/state.maxSpeed);while(state.stepTimer>=interval){rover.x-=Math.sin(state.yaw)*step*forward;rover.z-=Math.cos(state.yaw)*step*forward;state.stepTimer-=interval;}}else state.stepTimer=0;
+  document.querySelector("#speed").textContent=Math.round(Math.abs(state.velocity)*3.6);if(forward!==0)state.energy=Math.max(0,state.energy-dt*.035);document.querySelector("#energy").textContent=Math.round(state.energy);
+ }
+}
 cameraFollow.x+=(rover.x-cameraFollow.x)*Math.min(1,dt*5);cameraFollow.z+=(rover.z-cameraFollow.z)*Math.min(1,dt*5);const eye=[cameraFollow.x+15,20,cameraFollow.z+17],center=[cameraFollow.x,0.8,cameraFollow.z];viewProjection=mul(perspective(Math.PI/4.2,canvas.width/canvas.height,.1,260),lookAt(eye,center));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 // The playable ground is assembled from voxel tiles; no infinite flat plane.
 voxelBatches.forEach(b=>draw(matIdentity(),b.color,b.geometry));
