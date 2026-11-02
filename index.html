@@ -31,6 +31,7 @@
     <div class="resource-row"><i class="resource-dot silicon"></i><span>Кремний</span><b id="silicon-amount">0 кг</b></div>
     <small class="inventory-tip">E — добыть залежь рядом</small>
   </aside>
+  <aside id="ore-radar" aria-label="Карта месторождений"><div class="radar-title">СКАНЕР РЕСУРСОВ <b id="radar-count">24</b></div><canvas id="radar-canvas" width="180" height="180"></canvas><div class="radar-legend"><span><i class="iron"></i>Fe</span><span><i class="titanium"></i>Ti</span><span><i class="silicon"></i>Si</span></div></aside>
   <div id="crosshair">＋</div><div id="toast" role="status"></div>
   <section id="menu" class="overlay"><div class="menu-panel"><div class="eyebrow">MISSION CONTROL / 01</div><h1>ЛУННАЯ<br><em>БАЗА</em></h1><p>Исследуй поверхность. Собирай ресурсы.<br>Подготовь место для первой базы.</p><button id="start-btn" class="primary">НАЧАТЬ ЭКСПЕДИЦИЮ <span>↗</span></button><button id="settings-btn" class="secondary">НАСТРОЙКИ</button><div class="menu-foot">VOXEL DIORAMA · FIXED CAMERA · OFFLINE</div></div></section>
   <section id="settings" class="overlay hidden"><div class="menu-panel settings-panel"><div class="eyebrow">CONFIGURATION</div><h2>НАСТРОЙКИ</h2><label>Скорость ровера <output id="speed-value">12</output><input id="max-speed" type="range" min="4" max="24" step="1" value="12"></label><label class="toggle-row">Звук (позже)<input type="checkbox" id="sound" checked></label><button id="settings-back" class="primary">НАЗАД</button></div></section>
