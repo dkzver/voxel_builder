@@ -1,52 +1,22 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#090d18">
-  <title>Лунная База — этап 01</title>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#090d18">
+  <title>Лунная База — автономный статичный проект</title>
   <link rel="stylesheet" href="./styles/main.css">
-  <script type="importmap">
-    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
-  </script>
 </head>
 <body>
-  <div id="game-root">
-    <div id="hud" aria-live="polite">
-      <div class="brand"><span class="brand-mark">◈</span><div><strong>ЛУННАЯ БАЗА</strong><small>ПОВЕРХНОСТЬ · СЕКТОР 01</small></div></div>
-      <div class="stats">
-        <div class="stat"><span>СКОРОСТЬ</span><b id="speed">0</b><i>км/ч</i></div>
-        <div class="stat"><span>ЭНЕРГИЯ</span><b id="energy">100</b><i>%</i></div>
-        <div class="stat"><span>РЕСУРСЫ</span><b id="ore">0</b><i>кг</i></div>
-      </div>
-      <div class="objective"><span class="pulse"></span><div><small>ТЕКУЩАЯ ЗАДАЧА</small><b id="objective">Исследуйте лунную поверхность</b></div></div>
-      <div class="controls-hint">W A S D — движение <span>·</span> МЫШЬ — обзор <span>·</span> E — добыча <span>·</span> ESC — меню</div>
-    </div>
-    <div id="crosshair">＋</div>
-    <div id="toast" role="status"></div>
-    <section id="menu" class="overlay">
-      <div class="menu-panel">
-        <div class="eyebrow">MISSION CONTROL / 01</div>
-        <h1>ЛУННАЯ<br><em>БАЗА</em></h1>
-        <p>Исследуй поверхность. Собирай ресурсы.<br>Подготовь место для первой базы.</p>
-        <button id="start-btn" class="primary">НАЧАТЬ ЭКСПЕДИЦИЮ <span>↗</span></button>
-        <button id="settings-btn" class="secondary">НАСТРОЙКИ</button>
-        <div class="menu-foot">ALPHA BUILD · STAGE 01</div>
-      </div>
-    </section>
-    <section id="settings" class="overlay hidden">
-      <div class="menu-panel settings-panel">
-        <div class="eyebrow">CONFIGURATION</div><h2>НАСТРОЙКИ</h2>
-        <label>Чувствительность мыши <output id="sens-value">0.5</output><input id="sensitivity" type="range" min="0.1" max="1.5" step="0.1" value="0.5"></label>
-        <label>Скорость ровера <output id="speed-value">12</output><input id="max-speed" type="range" min="4" max="24" step="1" value="12"></label>
-        <label class="toggle-row">Звук (заготовка)<input type="checkbox" id="sound" checked></label>
-        <button id="settings-back" class="primary">НАЗАД</button>
-      </div>
-    </section>
-    <section id="pause" class="overlay hidden">
-      <div class="menu-panel"><div class="eyebrow">MISSION PAUSED</div><h2>ПАУЗА</h2><button id="resume-btn" class="primary">ПРОДОЛЖИТЬ</button><button id="quit-btn" class="secondary">В ГЛАВНОЕ МЕНЮ</button></div>
-    </section>
+<div id="game-root">
+  <div id="hud">
+    <div class="brand"><span class="brand-mark">◈</span><div><strong>ЛУННАЯ БАЗА</strong><small>ПОВЕРХНОСТЬ · СЕКТОР 01</small></div></div>
+    <div class="stats"><div class="stat"><span>СКОРОСТЬ</span><b id="speed">0</b><i>км/ч</i></div><div class="stat"><span>ЭНЕРГИЯ</span><b id="energy">100</b><i>%</i></div><div class="stat"><span>РЕСУРСЫ</span><b id="ore">0</b><i>кг</i></div></div>
+    <div class="objective"><span class="pulse"></span><div><small>ТЕКУЩАЯ ЗАДАЧА</small><b id="objective">Исследуйте лунную поверхность</b></div></div>
+    <div class="controls-hint">W A S D — движение <span>·</span> МЫШЬ — обзор <span>·</span> E — добыча <span>·</span> ESC — меню</div>
   </div>
-  <script type="module" src="./src/main.js"></script>
-</body>
-</html>
+  <div id="crosshair">＋</div><div id="toast" role="status"></div>
+  <section id="menu" class="overlay"><div class="menu-panel"><div class="eyebrow">MISSION CONTROL / 01</div><h1>ЛУННАЯ<br><em>БАЗА</em></h1><p>Исследуй поверхность. Собирай ресурсы.<br>Подготовь место для первой базы.</p><button id="start-btn" class="primary">НАЧАТЬ ЭКСПЕДИЦИЮ <span>↗</span></button><button id="settings-btn" class="secondary">НАСТРОЙКИ</button><div class="menu-foot">OFFLINE BUILD · NO SERVER · NO CDN</div></div></section>
+  <section id="settings" class="overlay hidden"><div class="menu-panel settings-panel"><div class="eyebrow">CONFIGURATION</div><h2>НАСТРОЙКИ</h2><label>Чувствительность мыши <output id="sens-value">0.5</output><input id="sensitivity" type="range" min="0.1" max="1.5" step="0.1" value="0.5"></label><label>Скорость ровера <output id="speed-value">12</output><input id="max-speed" type="range" min="4" max="24" step="1" value="12"></label><label class="toggle-row">Звук (позже)<input type="checkbox" id="sound" checked></label><button id="settings-back" class="primary">НАЗАД</button></div></section>
+  <section id="pause" class="overlay hidden"><div class="menu-panel"><div class="eyebrow">MISSION PAUSED</div><h2>ПАУЗА</h2><button id="resume-btn" class="primary">ПРОДОЛЖИТЬ</button><button id="quit-btn" class="secondary">В ГЛАВНОЕ МЕНЮ</button></div></section>
+</div>
+<script src="./src/main.js"></script>
+</body></html>
