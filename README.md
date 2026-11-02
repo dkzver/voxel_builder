@@ -1,15 +1,35 @@
 # Лунная База
 
-Browser-based 3D lunar rover and base-building game.
+Browser-based 3D lunar exploration prototype (HTML/CSS/JavaScript + Three.js).
 
-Development proceeds in milestone branches. The first milestone is a playable foundation: lunar terrain, third-person rover controls, a simple menu, and settings.
+## Stage 01 — lunar world and rover
 
-## Run
+Implemented in `stage/01-lunar-world-rover`:
+- Third-person 3D camera and a blockout lunar rover.
+- Procedural low-poly rocky landscape and collectible mineral deposits.
+- Keyboard rover driving, mouse camera look, basic energy and ore HUD.
+- Main menu, pause menu, and adjustable mouse sensitivity / rover speed.
 
-Serve the repository root with a local HTTP server (ES modules require HTTP), then open `index.html` in a modern browser.
+## Controls
+- `W` / `S` — forward / reverse
+- `A` / `D` — steering
+- Mouse — camera look (click the canvas to lock pointer)
+- `E` — mine nearby mineral node
+- `Esc` — pause / resume
 
-Example: `python -m http.server 8000`
+## Run locally
+The project uses ES modules and imports Three.js from jsDelivr CDN. Start a local static server in repository root:
 
-## Milestones
+```bash
+python -m http.server 8000
+```
 
-- `stage/01-lunar-world-rover` — playable world and rover foundation.
+Open `http://localhost:8000` in a modern browser. Internet connection is needed for the CDN dependency.
+
+## Roadmap
+- Stage 01: playable rover and lunar environment blockout.
+- Stage 02: base construction and interactive modules.
+- Stage 03: resource inventory, mining tools, crafting and progression.
+- Stage 04: persistence, polish and validation.
+
+This is an initial playable prototype, not yet the full feature-complete game.
