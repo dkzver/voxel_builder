@@ -26,3 +26,11 @@ Browser-based lunar rover prototype using plain HTML, CSS, JavaScript and native
 - Stage 04: local save system (IndexedDB), polish and QA
 
 This is an early playable prototype; it does not yet include the complete base-building or persistence features.
+## Stage 02 — base building
+Branch: `stage/02-base-building`.
+- Four modular build types: habitat, solar panel, resource storage, research lab.
+- Select modules from the construction panel or number keys 1–4.
+- Build ahead of the rover with the button; rotate with R or the rotate button.
+- Prevents placements overlapping a neighboring occupied grid cell.
+- Demolish the closest structure within 8 units.
+- Base layout is stored locally in browser `localStorage` under `lunar-base-modules-v1`. No backend is used.
