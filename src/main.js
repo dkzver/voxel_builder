@@ -80,6 +80,7 @@ document.querySelector("#rotate-module").addEventListener("click",()=>{moduleRot
 document.querySelector("#remove-module").addEventListener("click",removeNearestModule);
 addEventListener("keydown",e=>{if(e.code==="KeyR"&&state.running&&!state.paused){moduleRotation=(moduleRotation+Math.PI/2)%(Math.PI*2);showToast("Поворот модуля");}if(e.code==="Digit1")selectModule("habitat");if(e.code==="Digit2")selectModule("solar");if(e.code==="Digit3")selectModule("storage");if(e.code==="Digit4")selectModule("lab");});
 
+selectedModule="solar";
 let pendingPlacement=false,selectedBuildingId=null,dragBuild=null;
 const buildSizes={solar:"3.1 × 2.5 м",storage:"2.5 × 2.5 м",lab:"2.7 × 2.7 м",habitat:"2.9 × 2.9 м",comms:"3 × 3 м",landing:"5 × 5 м",factory:"3.5 × 3.5 м"};
 function refreshBuilder(){const m=baseModules.find(v=>v.id===selectedBuildingId),a=document.querySelector("#selected-name"),b=document.querySelector("#selected-size"),c=document.querySelector("#build-count"),d=document.querySelector("#placement-status");if(a)a.textContent=m?moduleCatalog[m.type].label:moduleCatalog[selectedModule].label;if(b)b.textContent=m?buildSizes[m.type]:buildSizes[selectedModule];if(c)c.textContent=baseModules.length;if(d)d.textContent=m?"Выбрана постройка — перетащите её":pendingPlacement?"Кликните по карте, чтобы построить":"Выберите модуль слева";}
