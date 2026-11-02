@@ -3,7 +3,7 @@ name: Deploy Lunar Base to GitHub Pages
 on:
   push:
     branches:
-      - stage/02-base-building
+      - stage/06-mountain-garage-departure
   workflow_dispatch:
 
 permissions:
@@ -11,9 +11,11 @@ permissions:
   pages: write
   id-token: write
 
+# Serialize deployments to the single GitHub Pages environment.
+# Do not cancel an active deployment when another commit is pushed.
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: github-pages-deploy
+  cancel-in-progress: false
 
 jobs:
   deploy:
