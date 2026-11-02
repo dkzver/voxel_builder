@@ -23,10 +23,12 @@ const sub=(a,b)=>a.map((v,i)=>v-b[i]),dot=(a,b)=>a.reduce((s,v,i)=>s+v*b[i],0),c
 function draw(m,color,geometry=cube){gl.bindBuffer(gl.ARRAY_BUFFER,geometry.buffer);gl.enableVertexAttribArray(posLoc);gl.vertexAttribPointer(posLoc,3,gl.FLOAT,false,0,0);gl.uniformMatrix4fv(modelLoc,false,new Float32Array(m));gl.uniformMatrix4fv(mvpLoc,false,new Float32Array(mul(viewProjection,m)));gl.uniform3fv(colorLoc,new Float32Array(color));gl.drawArrays(gl.TRIANGLES,0,geometry.count);}
 let viewProjection=matIdentity();
 let seed=92751;function rand(){seed=(seed*16807)%2147483647;return(seed-1)/2147483646;}
-const terrain=[],rocks=[],ores=[];
+const terrain=[],rocks=[],ores=[],voxelGround=[];
 for(let i=0;i<115;i++){const r=1+rand()*4.8;terrain.push({x:(rand()-.5)*170,z:(rand()-.5)*170,r,y:.12+rand()*.5,rot:rand()*6,color:[.31+rand()*.13,.30+rand()*.13,.29+rand()*.12]});}
 for(let i=0;i<170;i++){const s=.2+rand()*1.0;rocks.push({x:(rand()-.5)*160,z:(rand()-.5)*160,s,color:[.42+rand()*.12,.4+rand()*.12,.38+rand()*.12],rot:rand()*6});}
 for(let i=0;i<22;i++){let x=(rand()-.5)*100,z=(rand()-.5)*100;if(Math.hypot(x,z)<10)x+=18;ores.push({x,z,available:true,phase:rand()*6});}
+// Hand-built voxel asteroid surface: stepped shelves, a flatter starter-base plateau and a rocky perimeter.
+for(let gx=-10;gx<=10;gx++)for(let gz=-10;gz<=10;gz++){const x=gx*3,z=gz*3,r=Math.hypot(x,z);if(r>30)continue;const n=Math.sin(gx*1.71+gz*.63)*.22+Math.cos(gz*1.27-gx*.42)*.18;const h=r<12?.72:Math.max(.55,1.05+(r-12)*.045+n);const shade=.31+((gx*7+gz*11+210)%5)*.018;voxelGround.push({x,y:-.35+h/2,z,h,color:[shade,shade*.98,shade*.94]});}
 const state={running:false,paused:false,energy:100,ore:0,yaw:0,velocity:0,maxSpeed:12,sensitivity:.5};
 const cameraFollow={x:0,z:0};
 const rover={x:0,z:10};
@@ -93,6 +95,13 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous
 if(state.running&&!state.paused){const forward=(keys.has("KeyW")||keys.has("ArrowUp")?1:0)-(keys.has("KeyS")||keys.has("ArrowDown")?1:0),turn=(keys.has("KeyD")?1:0)-(keys.has("KeyA")?1:0);state.yaw+=turn*dt*(Math.abs(state.velocity)>.1?1.55:1.1);const target=forward*state.maxSpeed;state.velocity+=(target-state.velocity)*(1-Math.exp(-(forward?2.2:3.3)*dt));rover.x-=Math.sin(state.yaw)*state.velocity*dt*.42;rover.z-=Math.cos(state.yaw)*state.velocity*dt*.42;document.querySelector("#speed").textContent=Math.round(Math.abs(state.velocity)*3.6);if(Math.abs(state.velocity)>.1)state.energy=Math.max(0,state.energy-dt*.035);document.querySelector("#energy").textContent=Math.round(state.energy);}
 cameraFollow.x+=(rover.x-cameraFollow.x)*Math.min(1,dt*5);cameraFollow.z+=(rover.z-cameraFollow.z)*Math.min(1,dt*5);const eye=[cameraFollow.x+15,20,cameraFollow.z+17],center=[cameraFollow.x,0.8,cameraFollow.z];viewProjection=mul(perspective(Math.PI/4.2,canvas.width/canvas.height,.1,260),lookAt(eye,center));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 draw(model(0,-.65,0,130,.3,130),[.39,.37,.35]);
+voxelGround.forEach(b=>draw(model(b.x,b.y,b.z,1.5,b.h/2,1.5),b.color));
+// Landing pad, navigation beacon and antenna make the starter outpost read as a working spaceport.
+draw(model(9,.12,8,3.7,.12,3.7),[.22,.25,.28]);
+draw(model(9,.25,8,2.8,.035,2.8),[.38,.42,.43]);
+for(let i=0;i<12;i++){const a=i*Math.PI/6;draw(model(9+Math.cos(a)*3.25,.29,8+Math.sin(a)*3.25,.34,.045,.12,a),[.82,.68,.36]);}
+draw(model(-7,.65,-7,.18,.85,.18),[.52,.56,.58]);draw(model(-7,1.62,-7,.85,.12,.12),[.62,.67,.68]);draw(model(-7,2.05,-7,.12,.38,.12),[.72,.57,.31]);
+draw(model(3,.65,-7,.42,.65,.42),[.35,.4,.43]);draw(model(3,1.42,-7,.58,.16,.58),[.2,.68,.72]);
 terrain.forEach(t=>draw(model(t.x,t.y,t.z,t.r,t.r*.25,t.r,t.rot),t.color,oct));
 rocks.forEach(r=>draw(model(r.x,r.s*.5,r.z,r.s,r.s*.8,r.s,r.rot),r.color,oct));
 ores.forEach(n=>{if(n.available)draw(model(n.x,.85+Math.sin(now*.001+n.phase)*.12,n.z,.65,.85,.65,now*.0004+n.phase),[.25,.82,.69],oct);});
