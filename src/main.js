@@ -43,7 +43,7 @@ const resourceTypes=[
  {id:"titanium",label:"Титан",color:[.58,.68,.76]},
  {id:"silicon",label:"Кремний",color:[.82,.72,.36]}
 ];
-for(let i=0;i<24;i++){const a=rand()*Math.PI*2,d=9+rand()*17,cx=Math.round(Math.cos(a)*d/VOX)*VOX,cz=Math.round(Math.sin(a)*d/VOX)*VOX,cells=[],count=1+Math.floor(rand()*4),resource=resourceTypes[i%resourceTypes.length];for(let j=0;j<count;j++)cells.push({x:cx+(j%2)*VOX,z:cz+Math.floor(j/2)*VOX,y:.62});ores.push({x:cx,z:cz,cells,resource,available:true,phase:rand()*6});}
+for(let i=0;i<24;i++){const a=i*2.399963,d=6.2+(i%4)*1.55,cx=Math.round(Math.cos(a)*d/VOX)*VOX,cz=Math.round((-15+Math.sin(a)*d)/VOX)*VOX,cells=[],count=2+(i%3),resource=resourceTypes[i%resourceTypes.length];for(let j=0;j<count;j++)cells.push({x:cx+(j%2)*VOX,z:cz+Math.floor(j/2)*VOX,y:.62});ores.push({x:cx,z:cz,cells,resource,available:true,phase:rand()*6});}
 // The crater replaces the former mountain and underground hangar.
 // Batch terrain and mountain voxels by flat material to avoid thousands of WebGL draw calls.
 const voxelBatchMap=new Map();
@@ -52,7 +52,7 @@ const voxelBatches=[...voxelBatchMap.values()].map(b=>({color:b.color,geometry:m
 const state={running:false,paused:false,energy:100,ore:0,inventory:{iron:0,titanium:0,silicon:0},cargoCapacity:120,yaw:Math.PI,targetYaw:Math.PI,velocity:0,maxSpeed:12,direction:2};
 const departure={active:false,elapsed:0,door:0};
 const cameraFollow={x:0,z:-.7};
-const rover={x:0,z:-.7};
+const rover={x:0,z:-.7};let wheelTravel=0;const roverParts={bucketAngle:-.18};
 // === Base construction system: static-client only, persisted in localStorage ===
 const moduleCatalog={
  habitat:{label:"Жилой модуль",color:[.72,.76,.72],size:[1.45,1.05,1.45]},
@@ -148,6 +148,15 @@ updateBuildCount();updateInventoryUI();
 
 const keys=new Set();
 function turnRover(dir){state.direction=(state.direction+dir+4)%4;state.targetYaw=state.direction*Math.PI/2;}
+function localPoint(lx,ly,lz,yaw){const c=Math.cos(yaw),sn=Math.sin(yaw);return {x:rover.x+lx*c+lz*sn,y:terrainTop(rover.x,rover.z)+ly,z:rover.z-lx*sn+lz*c};}
+function modelAxle(x,y,z,sx,sy,sz,yaw,roll=0){const c=Math.cos(yaw),sn=Math.sin(yaw),cr=Math.cos(roll),sr=Math.sin(roll);return [c*sx,0,-sn*sx,0,sn*sr*sy,cr*sy,c*sr*sy,0,-sn*cr*sz,-sr*sz,c*cr*sz,0,x,y,z,1];}
+function roverBlocked(x,z){
+ const radius=1.02;if(Math.hypot(x,z)>29.2)return true;
+ for(const p of [[-2.05,-.55],[2.05,-.55],[-2.05,1.35],[2.05,1.35]])if(Math.hypot(x-p[0],z-p[1])<radius+.34)return true;
+ for(const m of baseModules){const def=moduleCatalog[m.type],r=Math.max(def.size[0],def.size[2])*.72+radius;if(Math.hypot(x-m.x,z-m.z)<r)return true;}
+ for(const rock of rocks)if(Math.hypot(x-rock.x,z-rock.z)<radius+rock.s*.72)return true;
+ return false;
+}
 addEventListener("keydown",e=>{if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code))e.preventDefault();if(e.code==="Escape")togglePause();if(e.code==="KeyE"&&state.running&&!state.paused&&!departure.active)mine();if(!state.running||state.paused||departure.active)return;if(!e.repeat&&(e.code==="KeyA"||e.code==="ArrowLeft"))turnRover(-1);if(!e.repeat&&(e.code==="KeyD"||e.code==="ArrowRight"))turnRover(1);if(["KeyW","ArrowUp","KeyS","ArrowDown"].includes(e.code))keys.add(e.code);});addEventListener("keyup",e=>keys.delete(e.code));
 // Fixed isometric camera: no mouse look and no pointer lock.
 const menu=document.querySelector("#menu"),pause=document.querySelector("#pause"),settings=document.querySelector("#settings"),toast=document.querySelector("#toast");let toastTimer;
@@ -200,8 +209,10 @@ if(state.running&&!state.paused){
   state.velocity+=(targetVelocity-state.velocity)*Math.min(1,dt*4.5);
   let angleDelta=((state.targetYaw-state.yaw+Math.PI*3)%(Math.PI*2))-Math.PI;
   const turnStep=3.6*dt;state.yaw+=Math.max(-turnStep,Math.min(turnStep,angleDelta));
-  rover.x-=Math.sin(state.yaw)*state.velocity*dt;
-  rover.z-=Math.cos(state.yaw)*state.velocity*dt;
+  const dx=-Math.sin(state.yaw)*state.velocity*dt,dz=-Math.cos(state.yaw)*state.velocity*dt;
+  const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.18)),sx=dx/steps,sz=dz/steps;
+  for(let step=0;step<steps;step++){const nx=rover.x+sx,nz=rover.z+sz;if(roverBlocked(nx,nz)){state.velocity=0;break;}rover.x=nx;rover.z=nz;wheelTravel+=Math.hypot(sx,sz)/.4;}
+  roverParts.bucketAngle=-.18+Math.sin(now*.0018)*.025;
   document.querySelector("#speed").textContent=Math.round(Math.abs(state.velocity)*3.6);if(forward!==0)state.energy=Math.max(0,state.energy-dt*.035);document.querySelector("#energy").textContent=Math.round(state.energy);
  }
 }
@@ -211,15 +222,17 @@ voxelBatches.forEach(b=>draw(matIdentity(),b.color,b.geometry));
 asteroidRim.forEach(r=>draw(model(r.x,r.h*.38,r.z,1.55,r.h,r.h*.92,r.rot),r.color));
 drawOutpost();
 rocks.forEach(r=>draw(model(r.x,terrainTop(r.x,r.z)+r.s*.5,r.z,r.s,r.s,r.s),r.color));
-ores.forEach(n=>{if(n.available)n.cells.forEach(c=>draw(model(c.x,terrainTop(c.x,c.z)+.62+Math.sin(now*.001+n.phase)*.035,c.z,VOX*.43,VOX*.43,VOX*.43),n.resource.color));});
+ores.forEach(n=>{if(n.available){n.cells.forEach(c=>draw(model(c.x,terrainTop(c.x,c.z)+.62+Math.sin(now*.001+n.phase)*.035,c.z,VOX*.48,VOX*.48,VOX*.48),n.resource.color));const gy=terrainTop(n.x,n.z),pulse=.12+Math.sin(now*.002+n.phase)*.035;draw(model(n.x,gy+1.35,n.z,.09,.72,.09),n.resource.color);draw(model(n.x,gy+2.08,n.z,.3+pulse,.3+pulse,.3+pulse),n.resource.color,oct);draw(model(n.x,gy+2.48,n.z,.12,.12,.12),[.92,.94,.82],oct);}});
 baseModules.forEach(drawBaseModule);
 const ry=state.yaw;
-draw(model(rover.x,terrainTop(rover.x,rover.z)+1.0,rover.z,1.0,.28,1.25,ry),[.72,.74,.7]);
-draw(model(rover.x,terrainTop(rover.x,rover.z)+1.34,rover.z-.18,.58,.34,.58,ry),[.14,.2,.24]);
-draw(model(rover.x,terrainTop(rover.x,rover.z)+1.48,rover.z-.18,.42,.19,.42,ry),[.12,.42,.5]);
-draw(model(rover.x,terrainTop(rover.x,rover.z)+1.68,rover.z+.85,1.35,.06,.48,ry),[.68,.48,.22]);
-for(const side of [-1,1])for(const front of [-1,1]){draw(model(rover.x+side*.92,terrainTop(rover.x,rover.z)+.48,rover.z+front*.82,.18,.4,.4,ry),[.12,.15,.18]);draw(model(rover.x+side*.92,terrainTop(rover.x,rover.z)+.48,rover.z+front*.82,.11,.26,.26,ry),[.38,.42,.42]);}
-draw(model(rover.x-.85,terrainTop(rover.x,rover.z)+1.7,rover.z-.5,.12,.35,.12,ry),[.25,.28,.3]);draw(model(rover.x-.85,terrainTop(rover.x,rover.z)+2.05,rover.z-.5,.18,.18,.18,ry),[.86,.62,.24]);
+const chassis=(lx,ly,lz,sx,sy,sz,color)=>{const p=localPoint(lx,ly,lz,ry);draw(model(p.x,p.y,p.z,sx,sy,sz,ry),color);};
+chassis(0,1.0,0,1.0,.28,1.25,[.72,.74,.7]);chassis(0,1.34,-.18,.58,.34,.58,[.14,.2,.24]);chassis(0,1.48,-.18,.42,.19,.42,[.12,.42,.5]);
+for(const side of [-1,1])for(const front of [-1,1]){const p=localPoint(side*.92,.48,front*.82,ry);draw(modelAxle(p.x,p.y,p.z,.19,.4,.4,ry,wheelTravel),[.075,.09,.11]);draw(modelAxle(p.x,p.y,p.z,.195,.27,.27,ry,wheelTravel),[.42,.46,.47]);}
+const ba=roverParts.bucketAngle;
+for(const side of [-1,1]){const arm=localPoint(side*.42,1.08,-1.28,ry);draw(modelAxle(arm.x,arm.y,arm.z,.105,.13,.72,ry,ba),[.78,.53,.22]);}
+const bucket=localPoint(0,.83,-1.75,ry);draw(modelAxle(bucket.x,bucket.y,bucket.z,.52,.18,.38,ry,ba),[.82,.57,.24]);
+const lip=localPoint(0,.73,-1.98,ry);draw(model(lip.x,lip.y,lip.z,.48,.06,.08,ry),[.42,.31,.19]);
+chassis(-.85,1.7,-.5,.12,.35,.12,[.25,.28,.3]);chassis(-.85,2.05,-.5,.18,.18,.18,[.86,.62,.24]);
 }
 requestAnimationFrame(frame);
 })();
