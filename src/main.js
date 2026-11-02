@@ -55,49 +55,113 @@ const state={running:false,paused:false,energy:100,ore:0,inventory:{iron:0,titan
 const departure={active:false,elapsed:0,door:0};
 const cameraFollow={x:0,z:-.7};
 const rover={x:0,z:-.7};let wheelTravel=0;const roverParts={bucketAngle:-.18};
-// === Base construction system: static-client only, persisted in localStorage ===
+// === Player construction: catalog modal -> world placement -> owned buildings dock ===
 const moduleCatalog={
  habitat:{label:"Жилой модуль",color:[.72,.76,.72],size:[1.45,1.05,1.45]},
  solar:{label:"Солнечная панель",color:[.2,.42,.72],size:[1.55,.12,1.25]},
  storage:{label:"Склад ресурсов",color:[.68,.48,.28],size:[1.25,.85,1.25]},
  lab:{label:"Лаборатория",color:[.58,.68,.76],size:[1.35,1,1.35]},
- comms:{label:"Коммуникационный узел",color:[.24,.66,.72],size:[1.35,1.35,1.35]},
+ comms:{label:"Станция связи",color:[.24,.66,.72],size:[1.35,1.35,1.35]},
  landing:{label:"Посадочная площадка",color:[.68,.72,.68],size:[2.5,.12,2.5]},
- factory:{label:"Производственный модуль",color:[.72,.48,.28],size:[1.75,1.15,1.75]}
+ factory:{label:"Завод",color:[.72,.48,.28],size:[1.75,1.15,1.75]}
 };
-let selectedModule="habitat",moduleRotation=0;
-let baseModules=[];
-try{const saved=JSON.parse(localStorage.getItem("lunar-base-modules-v3")||"null");if(Array.isArray(saved)&&saved.length>0)baseModules=saved.filter(m=>moduleCatalog[m.type]&&Number.isFinite(m.x)&&Number.isFinite(m.z));else baseModules=[{id:"starter-habitat",type:"habitat",x:-3.4,z:-14.5,rotation:0},{id:"starter-solar-a",type:"solar",x:-3.4,z:-18.2,rotation:0},{id:"starter-storage",type:"storage",x:0,z:-14.5,rotation:0},{id:"starter-lab",type:"lab",x:0,z:-18.2,rotation:0}];}catch(_){baseModules=[{id:"starter-habitat",type:"habitat",x:-3.4,z:-14.5,rotation:0},{id:"starter-solar-a",type:"solar",x:-3.4,z:-18.2,rotation:0},{id:"starter-storage",type:"storage",x:0,z:-14.5,rotation:0},{id:"starter-lab",type:"lab",x:0,z:-18.2,rotation:0}];}
-function persistBase(){try{localStorage.setItem("lunar-base-modules-v3",JSON.stringify(baseModules));}catch(_){showToast("Не удалось сохранить базу (storage unavailable)");}}
-function updateBuildCount(){const el=document.querySelector("#build-count");if(el)el.textContent="Построек: "+baseModules.length;}
-function selectModule(type){if(!moduleCatalog[type])return;selectedModule=type;document.querySelectorAll(".module-choice").forEach(b=>b.classList.toggle("active",b.dataset.module===type));}
-document.querySelectorAll(".module-choice").forEach(b=>b.addEventListener("click",()=>selectModule(b.dataset.module)));
-function targetBuildPosition(){const gx=-Math.sin(state.yaw),gz=-Math.cos(state.yaw);return {x:Math.round((rover.x+gx*5)/3.5)*3.5,z:Math.round((rover.z+gz*5)/3.5)*3.5};}
-function placeModule(){if(!state.running||state.paused){showToast("Начните экспедицию для строительства");return;}const p=targetBuildPosition();if(Math.hypot(p.x-rover.x,p.z-rover.z)<2.5){showToast("Слишком близко к роверу");return;}if(baseModules.some(m=>Math.hypot(m.x-p.x,m.z-p.z)<2.8)){showToast("Клетка занята другой постройкой");return;}baseModules.push({id:Date.now()+"-"+Math.floor(Math.random()*10000),type:selectedModule,x:p.x,z:p.z,rotation:moduleRotation});persistBase();updateBuildCount();showToast(moduleCatalog[selectedModule].label+" установлен");}
-function removeNearestModule(){let index=-1,best=8;for(let i=0;i<baseModules.length;i++){const d=Math.hypot(baseModules[i].x-rover.x,baseModules[i].z-rover.z);if(d<best){best=d;index=i;}}if(index<0){showToast("Нет построек в радиусе 8 м");return;}const removed=baseModules.splice(index,1)[0];persistBase();updateBuildCount();showToast(moduleCatalog[removed.type].label+" демонтирован");}
-document.querySelector("#place-module").addEventListener("click",placeModule);
-document.querySelector("#rotate-module").addEventListener("click",()=>{moduleRotation=(moduleRotation+Math.PI/2)%(Math.PI*2);showToast("Поворот: "+Math.round(moduleRotation*180/Math.PI)+"°");});
-document.querySelector("#remove-module").addEventListener("click",removeNearestModule);
-addEventListener("keydown",e=>{if(e.code==="KeyR"&&state.running&&!state.paused){moduleRotation=(moduleRotation+Math.PI/2)%(Math.PI*2);showToast("Поворот модуля");}if(e.code==="Digit1")selectModule("habitat");if(e.code==="Digit2")selectModule("solar");if(e.code==="Digit3")selectModule("storage");if(e.code==="Digit4")selectModule("lab");});
-
-selectedModule="solar";
-let pendingPlacement=false,selectedBuildingId=null,dragBuild=null;
 const buildSizes={solar:"3.1 × 2.5 м",storage:"2.5 × 2.5 м",lab:"2.7 × 2.7 м",habitat:"2.9 × 2.9 м",comms:"3 × 3 м",landing:"5 × 5 м",factory:"3.5 × 3.5 м"};
-function refreshBuilder(){const m=baseModules.find(v=>v.id===selectedBuildingId),a=document.querySelector("#selected-name"),b=document.querySelector("#selected-size"),c=document.querySelector("#build-count"),d=document.querySelector("#placement-status");if(a)a.textContent=m?moduleCatalog[m.type].label:moduleCatalog[selectedModule].label;if(b)b.textContent=m?buildSizes[m.type]:buildSizes[selectedModule];if(c)c.textContent=baseModules.length;if(d)d.textContent=m?"Выбрана постройка — перетащите её":pendingPlacement?"Кликните по карте, чтобы построить":"Выберите модуль слева";}
-function builderSelect(type){if(!moduleCatalog[type])return;selectedModule=type;pendingPlacement=true;selectedBuildingId=null;document.querySelectorAll(".module-choice").forEach(b=>b.classList.toggle("active",b.dataset.module===type));refreshBuilder();}
-document.querySelectorAll(".module-choice").forEach(b=>b.addEventListener("click",()=>builderSelect(b.dataset.module)));
-document.querySelector("#open-build-modal").onclick=()=>{document.querySelector("#build-modal").classList.remove("hidden");refreshBuilder();};
-document.querySelector("#close-build-modal").onclick=()=>document.querySelector("#build-modal").classList.add("hidden");
-document.querySelector("#cancel-placement").onclick=()=>{pendingPlacement=false;selectedBuildingId=null;refreshBuilder();};
-document.querySelector("#rotate-module").onclick=()=>{moduleRotation=(moduleRotation+Math.PI/2)%(Math.PI*2);const m=baseModules.find(v=>v.id===selectedBuildingId);if(m)m.rotation=moduleRotation;persistBase();};
-document.querySelector("#remove-module").onclick=()=>{const i=baseModules.findIndex(v=>v.id===selectedBuildingId);if(i<0){showToast("Выберите объект на карте");return;}baseModules.splice(i,1);selectedBuildingId=null;persistBase();refreshBuilder();};
-function pointerWorld(e){const r=canvas.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);return {x:cameraFollow.x+(dx+dy*.55)/24,z:cameraFollow.z+(dy*.55-dx)/24};}
-function pickBuild(e){let found=null,best=42;for(const m of baseModules){const r=canvas.getBoundingClientRect(),sx=r.left+r.width/2+(m.x-cameraFollow.x-(m.z-cameraFollow.z))*.48*24,sy=r.top+r.height/2+((m.x-cameraFollow.x)+(m.z-cameraFollow.z))*.25*24,d=Math.hypot(e.clientX-sx,e.clientY-sy);if(d<best){best=d;found=m;}}return found;}
-canvas.addEventListener("pointerdown",e=>{if(document.querySelector("#build-modal").classList.contains("hidden"))return;const hit=pickBuild(e);if(hit){selectedBuildingId=hit.id;pendingPlacement=false;dragBuild={id:hit.id,ox:hit.x,oz:hit.z};canvas.setPointerCapture(e.pointerId);refreshBuilder();}else if(pendingPlacement){const p=pointerWorld(e),def=moduleCatalog[selectedModule],valid=Math.hypot(p.x,p.z)<26&&!baseModules.some(m=>Math.hypot(m.x-p.x,m.z-p.z)<Math.max(def.size[0],def.size[2])+1.5);if(!valid){showToast("Место занято или вне зоны строительства");return;}baseModules.push({id:"build-"+Date.now(),type:selectedModule,x:Math.round(p.x*2)/2,z:Math.round(p.z*2)/2,rotation:moduleRotation});selectedBuildingId=baseModules[baseModules.length-1].id;pendingPlacement=false;persistBase();refreshBuilder();showToast("Модуль установлен");}});
-canvas.addEventListener("pointermove",e=>{if(!dragBuild)return;const m=baseModules.find(v=>v.id===dragBuild.id);if(m){const p=pointerWorld(e);m.x=Math.round(p.x*2)/2;m.z=Math.round(p.z*2)/2;}});
-canvas.addEventListener("pointerup",()=>{if(!dragBuild)return;const m=baseModules.find(v=>v.id===dragBuild.id);if(m){const def=moduleCatalog[m.type],bad=Math.hypot(m.x,m.z)>26||baseModules.some(v=>v.id!==m.id&&Math.hypot(v.x-m.x,v.z-m.z)<Math.max(def.size[0],def.size[2])+1.5);if(bad){m.x=dragBuild.ox;m.z=dragBuild.oz;showToast("Перемещение отменено");}else{persistBase();showToast("Положение обновлено");}}dragBuild=null;refreshBuilder();});
-canvas.addEventListener("pointercancel",()=>{if(dragBuild){const m=baseModules.find(v=>v.id===dragBuild.id);if(m){m.x=dragBuild.ox;m.z=dragBuild.oz;}dragBuild=null;}});
-if(new URLSearchParams(location.search).has("builder")||document.body.dataset.builder==="true"){document.querySelector("#menu").classList.add("hidden");document.querySelector("#build-modal").classList.remove("hidden");state.running=true;}
+let selectedModule="solar",moduleRotation=0,pendingPlacement=false,selectedBuildingId=null,previewWorld=null,previewValid=false;
+let baseModules=[];
+try{
+ const saved=JSON.parse(localStorage.getItem("lunar-base-modules-v3")||"null");
+ if(Array.isArray(saved))baseModules=saved.filter(m=>moduleCatalog[m.type]&&Number.isFinite(m.x)&&Number.isFinite(m.z));
+}catch(_){baseModules=[];}
+function persistBase(){try{localStorage.setItem("lunar-base-modules-v3",JSON.stringify(baseModules));}catch(_){showToast("Не удалось сохранить базу в браузере");}}
+function updateBuildCount(){const el=document.querySelector("#build-count");if(el)el.textContent=String(baseModules.length);}
+function refreshBuildingDock(){
+ const list=document.querySelector("#player-building-list");if(!list)return;
+ list.replaceChildren();
+ if(!baseModules.length){const empty=document.createElement("span");empty.className="empty-buildings";empty.textContent="Построек пока нет";list.append(empty);}
+ baseModules.forEach((m,index)=>{
+  const item=document.createElement("button");item.type="button";item.className="owned-building"+(m.id===selectedBuildingId?" selected":"");
+  item.dataset.buildingId=m.id;
+  const title=document.createElement("b");title.textContent=moduleCatalog[m.type].label;
+  const meta=document.createElement("small");meta.textContent="Модуль "+(index+1)+" · "+buildSizes[m.type];
+  item.append(title,meta);item.addEventListener("click",()=>{selectedBuildingId=m.id;pendingPlacement=false;refreshBuildingDock();showToast(moduleCatalog[m.type].label+" выбрана");});
+  list.append(item);
+ });
+ updateBuildCount();
+}
+function setPlacementMessage(message,valid){
+ const el=document.querySelector("#placement-message"),hint=document.querySelector("#placement-hint"),dot=document.querySelector(".placement-dot");
+ if(el)el.textContent=message;
+ if(hint)hint.classList.toggle("invalid",valid===false);
+ if(dot)dot.style.background=valid===false?"#ff5364":"#8bea65";
+}
+function openBuildCatalog(){pendingPlacement=false;document.querySelector("#build-modal").classList.remove("hidden");}
+function closeBuildCatalog(){document.querySelector("#build-modal").classList.add("hidden");}
+function beginPlacement(type){
+ if(!moduleCatalog[type])return;
+ selectedModule=type;moduleRotation=0;selectedBuildingId=null;pendingPlacement=true;previewWorld=null;
+ closeBuildCatalog();document.querySelector("#placement-hint").classList.remove("hidden");
+ setPlacementMessage("Переместите курсор по поверхности",true);
+ refreshBuildingDock();
+}
+document.querySelector("#open-build-modal").addEventListener("click",openBuildCatalog);
+document.querySelector("#close-build-modal").addEventListener("click",closeBuildCatalog);
+document.querySelectorAll(".module-choice").forEach(button=>button.addEventListener("click",()=>beginPlacement(button.dataset.module)));
+function rotatePlacement(){moduleRotation=(moduleRotation+Math.PI/2)%(Math.PI*2);if(pendingPlacement)setPlacementMessage("Поворот: "+Math.round(moduleRotation*180/Math.PI)+"°",previewValid);}
+function cancelPlacement(){pendingPlacement=false;previewWorld=null;document.querySelector("#placement-hint").classList.add("hidden");refreshBuildingDock();}
+function inverseMatrix(a){
+ const out=new Array(16),a00=a[0],a01=a[1],a02=a[2],a03=a[3],a10=a[4],a11=a[5],a12=a[6],a13=a[7],a20=a[8],a21=a[9],a22=a[10],a23=a[11],a30=a[12],a31=a[13],a32=a[14],a33=a[15];
+ const b00=a00*a11-a01*a10,b01=a00*a12-a02*a10,b02=a00*a13-a03*a10,b03=a01*a12-a02*a11,b04=a01*a13-a03*a11,b05=a02*a13-a03*a12,b06=a20*a31-a21*a30,b07=a20*a32-a22*a30,b08=a20*a33-a23*a30,b09=a21*a32-a22*a31,b10=a21*a33-a23*a31,b11=a22*a33-a23*a32;
+ let det=b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;if(!det)return null;det=1/det;
+ out[0]=(a11*b11-a12*b10+a13*b09)*det;out[1]=(a02*b10-a01*b11-a03*b09)*det;out[2]=(a31*b05-a32*b04+a33*b03)*det;out[3]=(a22*b04-a21*b05-a23*b03)*det;
+ out[4]=(a12*b08-a10*b11-a13*b07)*det;out[5]=(a00*b11-a02*b08+a03*b07)*det;out[6]=(a32*b02-a30*b05-a33*b01)*det;out[7]=(a20*b05-a22*b02+a23*b01)*det;
+ out[8]=(a10*b10-a11*b08+a13*b06)*det;out[9]=(a01*b08-a00*b10-a03*b06)*det;out[10]=(a30*b04-a31*b02+a33*b00)*det;out[11]=(a21*b02-a20*b04-a23*b00)*det;
+ out[12]=(a11*b07-a10*b09-a12*b06)*det;out[13]=(a00*b09-a01*b07+a02*b06)*det;out[14]=(a31*b01-a30*b03-a32*b00)*det;out[15]=(a20*b03-a21*b01+a22*b00)*det;return out;
+}
+function unproject(inv,x,y,z){const p=[inv[0]*x+inv[4]*y+inv[8]*z+inv[12],inv[1]*x+inv[5]*y+inv[9]*z+inv[13],inv[2]*x+inv[6]*y+inv[10]*z+inv[14],inv[3]*x+inv[7]*y+inv[11]*z+inv[15]];return [p[0]/p[3],p[1]/p[3],p[2]/p[3]];}
+function pointerWorld(e){
+ const r=canvas.getBoundingClientRect(),nx=((e.clientX-r.left)/r.width)*2-1,ny=1-((e.clientY-r.top)/r.height)*2,inv=inverseMatrix(viewProjection);if(!inv)return null;
+ const near=unproject(inv,nx,ny,-1),far=unproject(inv,nx,ny,1),dir=norm(sub(far,near));if(Math.abs(dir[1])<.0001)return null;
+ let t=(terrainTop(near[0],near[2])-near[1])/dir[1],x=near[0]+dir[0]*t,z=near[2]+dir[2]*t;
+ for(let i=0;i<3;i++){t=(terrainTop(x,z)-near[1])/dir[1];x=near[0]+dir[0]*t;z=near[2]+dir[2]*t;}
+ return {x:Math.round(x*2)/2,z:Math.round(z*2)/2};
+}
+function footprint(type,rotation){const size=moduleCatalog[type].size;return Math.abs(Math.cos(rotation))>.5?{x:size[0],z:size[2]}:{x:size[2],z:size[0]};}
+function validBuildPosition(p,type,rotation,ignoreId=null){
+ if(!p||Math.hypot(p.x,p.z)>27)return {ok:false,reason:"За пределами строительной зоны"};
+ const f=footprint(type,rotation),hx=f.x+.18,hz=f.z+.18;
+ const ground=[[-hx,-hz],[hx,-hz],[-hx,hz],[hx,hz]].map(([x,z])=>terrainTop(p.x+x,p.z+z));
+ if(Math.max(...ground)-Math.min(...ground)>.95)return {ok:false,reason:"Слишком неровная поверхность"};
+ if(Math.hypot(p.x-rover.x,p.z-rover.z)<Math.max(hx,hz)+1.15)return {ok:false,reason:"Слишком близко к луноходу"};
+ for(const m of baseModules){if(m.id===ignoreId)continue;const other=footprint(m.type,m.rotation||0);if(Math.abs(p.x-m.x)<(hx+other.x/2+.2)&&Math.abs(p.z-m.z)<(hz+other.z/2+.2))return {ok:false,reason:"Пересечение с другой постройкой"};}
+ for(const rock of rocks){const dx=Math.max(Math.abs(rock.x-p.x)-hx,0),dz=Math.max(Math.abs(rock.z-p.z)-hz,0);if(dx*dx+dz*dz<Math.pow(rock.s*.85+.12,2))return {ok:false,reason:"На этом месте находится камень"};}
+ return {ok:true,reason:"Место подходит для строительства"};
+}
+function placePendingModule(){
+ if(!pendingPlacement||!previewWorld)return;
+ const check=validBuildPosition(previewWorld,selectedModule,moduleRotation);
+ if(!check.ok){setPlacementMessage(check.reason,false);return;}
+ const m={id:"build-"+Date.now()+"-"+Math.floor(Math.random()*10000),type:selectedModule,x:previewWorld.x,z:previewWorld.z,rotation:moduleRotation};
+ baseModules.push(m);selectedBuildingId=m.id;persistBase();refreshBuildingDock();pendingPlacement=false;previewWorld=null;
+ document.querySelector("#placement-hint").classList.add("hidden");showToast(moduleCatalog[m.type].label+" построена");
+}
+function pickBuilding(p){
+ if(!p)return null;let best=null,bestScore=Infinity;
+ for(const m of baseModules){const f=footprint(m.type,m.rotation||0),dx=Math.abs(p.x-m.x),dz=Math.abs(p.z-m.z);if(dx<=f.x/2+.35&&dz<=f.z/2+.35){const score=dx+dz;if(score<bestScore){best=m;bestScore=score;}}}
+ return best;
+}
+canvas.addEventListener("pointermove",e=>{if(!pendingPlacement)return;previewWorld=pointerWorld(e);const check=validBuildPosition(previewWorld,selectedModule,moduleRotation);previewValid=check.ok;setPlacementMessage(check.reason,check.ok);});
+canvas.addEventListener("pointerdown",e=>{
+ if(!pendingPlacement){const p=pointerWorld(e),hit=pickBuilding(p);if(hit){selectedBuildingId=hit.id;refreshBuildingDock();showToast(moduleCatalog[hit.type].label+" выбрана");}return;}
+ previewWorld=pointerWorld(e);const check=validBuildPosition(previewWorld,selectedModule,moduleRotation);previewValid=check.ok;setPlacementMessage(check.reason,check.ok);if(check.ok)placePendingModule();
+});
+addEventListener("keydown",e=>{
+ if(e.code==="Escape"){if(pendingPlacement)cancelPlacement();else if(!document.querySelector("#build-modal").classList.contains("hidden"))closeBuildCatalog();}
+ if(e.code==="KeyR"&&pendingPlacement)rotatePlacement();
+});
+if(new URLSearchParams(location.search).has("builder")||document.body.dataset.builder==="true"){
+ document.querySelector("#menu").classList.add("hidden");closeBuildCatalog();state.running=true;
+}
+refreshBuildingDock();
 function drawBaseModule(m){
  const def=moduleCatalog[m.type],r=m.rotation||0,ground=terrainTop(m.x,m.z),box=(x,y,z,sx,sy,sz,c,rot=r)=>draw(model(x,y+ground,z,sx,sy,sz,rot),c);
  const metal=[.27,.31,.34],light=[.78,.79,.72],dark=[.12,.17,.21],orange=[.82,.48,.22],glass=[.12,.39,.48];
