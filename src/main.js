@@ -53,26 +53,83 @@ document.querySelector("#place-module").addEventListener("click",placeModule);
 document.querySelector("#rotate-module").addEventListener("click",()=>{moduleRotation=(moduleRotation+Math.PI/2)%(Math.PI*2);showToast("Поворот: "+Math.round(moduleRotation*180/Math.PI)+"°");});
 document.querySelector("#remove-module").addEventListener("click",removeNearestModule);
 addEventListener("keydown",e=>{if(e.code==="KeyR"&&state.running&&!state.paused){moduleRotation=(moduleRotation+Math.PI/2)%(Math.PI*2);showToast("Поворот модуля");}if(e.code==="Digit1")selectModule("habitat");if(e.code==="Digit2")selectModule("solar");if(e.code==="Digit3")selectModule("storage");if(e.code==="Digit4")selectModule("lab");});
-function drawBaseModule(m){const def=moduleCatalog[m.type],r=m.rotation||0;
-draw(model(m.x,.12,m.z,1.65,.12,1.65,r),[.38,.38,.37]);
-if(m.type==="habitat"){
- draw(model(m.x,.95,m.z,def.size[0],def.size[1],def.size[2],r),def.color);
- draw(model(m.x,1.15,m.z-1.48,.62,.45,.12,r),[.12,.25,.34]);
- draw(model(m.x,2.12,m.z,.18,.16,.18,r),[.75,.64,.38]);
-}else if(m.type==="solar"){
- draw(model(m.x,.5,m.z,1.35,.12,.9,r),def.color);
- draw(model(m.x,.32,m.z,1.55,.08,1.2,r),[.22,.25,.28]);
- draw(model(m.x,.25,m.z, .12,.22,.12,r),[.68,.65,.58]);
-}else if(m.type==="storage"){
- draw(model(m.x,.82,m.z,def.size[0],def.size[1],def.size[2],r),def.color);
- draw(model(m.x,.86,m.z-1.27,.42,.52,.1,r),[.28,.22,.14]);
- draw(model(m.x,1.75,m.z,.12,.12,.12,r),[.78,.7,.42]);
-}else if(m.type==="lab"){
- draw(model(m.x,.9,m.z,def.size[0],def.size[1],def.size[2],r),def.color);
- draw(model(m.x,1.35,m.z-1.37,.6,.28,.12,r),[.2,.75,.68]);
- draw(model(m.x,1.95,m.z,.12,.18,.12,r),[.68,.8,.9]);
+function drawBaseModule(m){
+ const def=moduleCatalog[m.type],r=m.rotation||0,box=(x,y,z,sx,sy,sz,c,rot=r)=>draw(model(x,y,z,sx,sy,sz,rot),c);
+ const metal=[.27,.31,.34],light=[.78,.79,.72],dark=[.12,.17,.21],orange=[.82,.48,.22],glass=[.12,.39,.48];
+ box(m.x,.12,m.z,1.72,.12,1.72,[.34,.35,.34]);
+ // Raised foundation rim and corner feet.
+ for(const sx of [-1,1])for(const sz of [-1,1])box(m.x+sx*1.35,.32,m.z+sz*1.35,.16,.22,.16,metal);
+ if(m.type==="habitat"){
+  box(m.x,.98,m.z,1.42,1.05,1.42,def.color);
+  box(m.x,2.08,m.z,.92,.18,.92,[.62,.67,.64]);
+  box(m.x,1.15,m.z-1.445,.62,.48,.055,glass);
+  box(m.x,1.15,m.z+1.445,.62,.48,.055,glass);
+  box(m.x-1.445,1.12,m.z,.055,.42,.62,glass);
+  box(m.x+1.445,1.12,m.z,.055,.42,.62,glass);
+  box(m.x,1.82,m.z-1.51,.72,.08,.12,orange);
+  // Roof life-support equipment, hatch and vents.
+  box(m.x-.72,2.34,m.z+.45,.35,.18,.42,metal);
+  box(m.x+.68,2.3,m.z-.35,.28,.14,.32,orange);
+  for(let i=0;i<4;i++)box(m.x-.75+i*.5,2.3,m.z-.92,.12,.12,.3,light);
+  box(m.x,2.42,m.z,.22,.12,.22,orange);
+ }else if(m.type==="solar"){
+  box(m.x,.5,m.z,1.52,.12,1.12,[.16,.2,.24]);
+  box(m.x,.65,m.z,1.42,.06,1.02,[.12,.27,.53]);
+  for(let i=-2;i<=2;i++)box(m.x+i*.48,.69,m.z, .025,.025,.98,[.47,.67,.86]);
+  for(let i=-1;i<=1;i++)box(m.x,.7,m.z+i*.31,1.36,.025,.025,[.47,.67,.86]);
+  box(m.x,.3,m.z,.14,.32,.14,metal);
+  box(m.x-1.15,.32,m.z,.12,.28,.12,orange);
+ }else if(m.type==="storage"){
+  box(m.x,.9,m.z,1.28,.9,1.28,def.color);
+  box(m.x,1.85,m.z,.95,.12,.95,light);
+  box(m.x,.94,m.z-1.3,.58,.62,.08,dark);
+  box(m.x,.94,m.z-1.36,.42,.48,.035,orange);
+  for(let i=-1;i<=1;i++)box(m.x+i*.35,.94,m.z+1.3,.12,.46,.08,light);
+  box(m.x-.9,1.25,m.z,.18,.16,.18,orange);
+ }else if(m.type==="lab"){
+  box(m.x,.96,m.z,1.35,1,1.35,def.color);
+  box(m.x,1.2,m.z-1.37,.82,.34,.07,[.12,.62,.67]);
+  box(m.x,1.92,m.z,.72,.14,.72,light);
+  box(m.x,2.15,m.z,.28,.18,.28,orange);
+  for(let i=-1;i<=1;i++)box(m.x+i*.48,1.08,m.z+1.37,.16,.56,.06,glass);
+  box(m.x+1.4,.55,m.z,.18,.48,.18,metal);
+ }
 }
+// Small utility structures turn the starter cluster into a believable working outpost.
+function drawOutpost(){
+ const b=(x,y,z,sx,sy,sz,c,r=0)=>draw(model(x,y,z,sx,sy,sz,r),c);
+ const steel=[.31,.36,.39],pale=[.72,.72,.65],amber=[.9,.57,.23],cyan=[.12,.65,.72],rubber=[.12,.14,.16];
+ // Landing apron and painted guidance markings.
+ b(9,.1,8,4.35,.12,4.35,[.22,.25,.27]);
+ b(9,.19,8,3.72,.035,3.72,[.36,.39,.39]);
+ for(let i=0;i<12;i++){const a=i*Math.PI/6;b(9+Math.cos(a)*3.35,.24,8+Math.sin(a)*3.35,.34,.045,.12,amber,a);}
+ b(9,.27,8,.18,.04,.18,pale);
+ // Landing lights.
+ for(let i=0;i<8;i++){const a=i*Math.PI/4;b(9+Math.cos(a)*4.1,.34,8+Math.sin(a)*4.1,.12,.12,.12,cyan);}
+ // Fuel / oxygen tanks with supports and end caps.
+ for(let i=0;i<2;i++){const x=6+i*1.25;b(x,.72,1.8,.42,.62,.42,[.62,.67,.65]);b(x,1.38,1.8,.3,.08,.3,amber);b(x,.12,1.8,.55,.12,.55,steel);}
+ // Raised pipes linking habitat to service area.
+ b(2,.52,1.8,2.5,.12,.12,amber);b(3.15,.52,1.8,.12,.48,.12,amber);
+ b(2.9,.24,2.8,.12,.18,1.9,steel);
+ // Communication mast with crossbars, dish and signal beacon.
+ b(-7,.8,-7,.16,1.25,.16,steel);b(-7,2.08,-7,.78,.1,.1,pale);b(-7,2.38,-7,.1,.38,.1,amber);
+ b(-7.55,1.55,-7,.38,.12,.12,cyan);b(-6.45,1.55,-7,.38,.12,.12,cyan);
+ b(-7,2.75,-7,.18,.18,.18,amber);
+ // A small service gantry and equipment crates.
+ b(-3,.38,2.2,1.5,.16,.8,steel);b(-3,.95,2.2,.12,.65,.12,amber);b(-4.35,1.15,2.2,.12,.9,.12,amber);
+ for(let i=0;i<3;i++){b(-4.9+i*.62,.55,3.8,.48,.48,.48,i===1?amber:[.48,.51,.48]);}
+ // Short voxel walkway links the habitat to the landing apron.
+ for(let i=0;i<6;i++)b(1.4+i*.72,.14,5.0,.31,.08,.72,[.43,.46,.43]);
+ // Work lights on short poles.
+ for(const p of [[-2,-1],[5,-2],[5,5],[-5,5]]){b(p[0],.78,p[1],.09,.72,.09,steel);b(p[0],1.52,p[1],.28,.1,.28,amber);}
+ // Rover parking bay beside the landing pad.
+ b(14,.16,3.4,2.6,.12,3.8,steel);b(14,.25,3.4,2.2,.035,3.3,[.28,.32,.33]);
+ for(let i=0;i<4;i++)b(12.9+i*.72,.31,1.9,.08,.035,.3,amber);
 }
+// A broken, stepped rim gives the playable plateau a readable asteroid silhouette.
+const asteroidRim=[];
+for(let i=0;i<52;i++){const a=i*Math.PI*2/52,r=31+(i%4)*.55,h=1.1+(i%5)*.34;asteroidRim.push({x:Math.cos(a)*r,z:Math.sin(a)*r,h,rot:-a,color:[.27+(i%3)*.025,.26+(i%3)*.025,.25+(i%3)*.025]});}
+
 updateBuildCount();
 
 const keys=new Set();addEventListener("keydown",e=>{keys.add(e.code);if(["Space","ArrowUp","ArrowDown"].includes(e.code))e.preventDefault();if(e.code==="Escape")togglePause();if(e.code==="KeyE"&&state.running&&!state.paused)mine();});addEventListener("keyup",e=>keys.delete(e.code));
@@ -94,20 +151,21 @@ let previous=performance.now();
 function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous)/1000,.05);previous=now;
 if(state.running&&!state.paused){const forward=(keys.has("KeyW")||keys.has("ArrowUp")?1:0)-(keys.has("KeyS")||keys.has("ArrowDown")?1:0),turn=(keys.has("KeyD")?1:0)-(keys.has("KeyA")?1:0);state.yaw+=turn*dt*(Math.abs(state.velocity)>.1?1.55:1.1);const target=forward*state.maxSpeed;state.velocity+=(target-state.velocity)*(1-Math.exp(-(forward?2.2:3.3)*dt));rover.x-=Math.sin(state.yaw)*state.velocity*dt*.42;rover.z-=Math.cos(state.yaw)*state.velocity*dt*.42;document.querySelector("#speed").textContent=Math.round(Math.abs(state.velocity)*3.6);if(Math.abs(state.velocity)>.1)state.energy=Math.max(0,state.energy-dt*.035);document.querySelector("#energy").textContent=Math.round(state.energy);}
 cameraFollow.x+=(rover.x-cameraFollow.x)*Math.min(1,dt*5);cameraFollow.z+=(rover.z-cameraFollow.z)*Math.min(1,dt*5);const eye=[cameraFollow.x+15,20,cameraFollow.z+17],center=[cameraFollow.x,0.8,cameraFollow.z];viewProjection=mul(perspective(Math.PI/4.2,canvas.width/canvas.height,.1,260),lookAt(eye,center));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-draw(model(0,-.65,0,130,.3,130),[.39,.37,.35]);
+// The playable ground is assembled from voxel tiles; no infinite flat plane.
 voxelGround.forEach(b=>draw(model(b.x,b.y,b.z,1.5,b.h/2,1.5),b.color));
-// Landing pad, navigation beacon and antenna make the starter outpost read as a working spaceport.
-draw(model(9,.12,8,3.7,.12,3.7),[.22,.25,.28]);
-draw(model(9,.25,8,2.8,.035,2.8),[.38,.42,.43]);
-for(let i=0;i<12;i++){const a=i*Math.PI/6;draw(model(9+Math.cos(a)*3.25,.29,8+Math.sin(a)*3.25,.34,.045,.12,a),[.82,.68,.36]);}
-draw(model(-7,.65,-7,.18,.85,.18),[.52,.56,.58]);draw(model(-7,1.62,-7,.85,.12,.12),[.62,.67,.68]);draw(model(-7,2.05,-7,.12,.38,.12),[.72,.57,.31]);
-draw(model(3,.65,-7,.42,.65,.42),[.35,.4,.43]);draw(model(3,1.42,-7,.58,.16,.58),[.2,.68,.72]);
+asteroidRim.forEach(r=>draw(model(r.x,r.h*.38,r.z,1.55,r.h,r.h*.92,r.rot),r.color));
+drawOutpost();
 terrain.forEach(t=>draw(model(t.x,t.y,t.z,t.r,t.r*.25,t.r,t.rot),t.color,oct));
 rocks.forEach(r=>draw(model(r.x,r.s*.5,r.z,r.s,r.s*.8,r.s,r.rot),r.color,oct));
 ores.forEach(n=>{if(n.available)draw(model(n.x,.85+Math.sin(now*.001+n.phase)*.12,n.z,.65,.85,.65,now*.0004+n.phase),[.25,.82,.69],oct);});
 baseModules.forEach(drawBaseModule);
-const ry=state.yaw;draw(model(rover.x,1.0,rover.z,1.15,.28,1.55,ry),[.72,.74,.7]);draw(model(rover.x,1.55,rover.z-.2,.65,.36,.55,ry),[.12,.17,.22]);draw(model(rover.x,1.68,rover.z+1.05,1.9,.06,.65,ry),[.68,.48,.22]);
-for(const side of [-1,1])for(const front of [-1,1])draw(model(rover.x+side*1.18,.48,rover.z+front*1.05,.2,.48,.48,ry),[.12,.15,.18]);
+const ry=state.yaw;
+draw(model(rover.x,1.0,rover.z,1.15,.28,1.55,ry),[.72,.74,.7]);
+draw(model(rover.x,1.34,rover.z-.18,.72,.34,.72,ry),[.14,.2,.24]);
+draw(model(rover.x,1.48,rover.z-.18,.48,.19,.5,ry),[.12,.42,.5]);
+draw(model(rover.x,1.68,rover.z+1.05,1.9,.06,.65,ry),[.68,.48,.22]);
+for(const side of [-1,1])for(const front of [-1,1]){draw(model(rover.x+side*1.18,.48,rover.z+front*1.05,.23,.48,.48,ry),[.12,.15,.18]);draw(model(rover.x+side*1.18,.48,rover.z+front*1.05,.13,.3,.3,ry),[.38,.42,.42]);}
+draw(model(rover.x-.85,1.7,rover.z-.5,.12,.35,.12,ry),[.25,.28,.3]);draw(model(rover.x-.85,2.05,rover.z-.5,.18,.18,.18,ry),[.86,.62,.24]);
 }
 requestAnimationFrame(frame);
 })();
