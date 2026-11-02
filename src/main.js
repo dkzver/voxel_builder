@@ -38,13 +38,18 @@ for(let gx=-36;gx<=36;gx++)for(let gz=-36;gz<=36;gz++){
  voxelGround.push({x,y:(top+TERRAIN_BOTTOM)/2,z,h,color:[shade,shade*.98,shade*.94]});
 }
 for(let i=0;i<230;i++){const a=rand()*Math.PI*2,d=10+rand()*19,v=.18+rand()*.42;rocks.push({x:Math.round(Math.cos(a)*d/VOX)*VOX,z:Math.round(Math.sin(a)*d/VOX)*VOX,s:v,color:[.34+rand()*.08,.33+rand()*.08,.32+rand()*.08]});}
-for(let i=0;i<24;i++){const a=rand()*Math.PI*2,d=9+rand()*17,cx=Math.round(Math.cos(a)*d/VOX)*VOX,cz=Math.round(Math.sin(a)*d/VOX)*VOX,cells=[],count=1+Math.floor(rand()*4);for(let j=0;j<count;j++)cells.push({x:cx+(j%2)*VOX,z:cz+Math.floor(j/2)*VOX,y:.62});ores.push({x:cx,z:cz,cells,available:true,phase:rand()*6});}
+const resourceTypes=[
+ {id:"iron",label:"Железо",color:[.72,.43,.28]},
+ {id:"titanium",label:"Титан",color:[.58,.68,.76]},
+ {id:"silicon",label:"Кремний",color:[.82,.72,.36]}
+];
+for(let i=0;i<24;i++){const a=rand()*Math.PI*2,d=9+rand()*17,cx=Math.round(Math.cos(a)*d/VOX)*VOX,cz=Math.round(Math.sin(a)*d/VOX)*VOX,cells=[],count=1+Math.floor(rand()*4),resource=resourceTypes[i%resourceTypes.length];for(let j=0;j<count;j++)cells.push({x:cx+(j%2)*VOX,z:cz+Math.floor(j/2)*VOX,y:.62});ores.push({x:cx,z:cz,cells,resource,available:true,phase:rand()*6});}
 // The crater replaces the former mountain and underground hangar.
 // Batch terrain and mountain voxels by flat material to avoid thousands of WebGL draw calls.
 const voxelBatchMap=new Map();
 for(const b of voxelGround){const c=b.color,k=c.join(",");if(!voxelBatchMap.has(k))voxelBatchMap.set(k,{color:c,data:[]});const d=voxelBatchMap.get(k).data;for(let i=0;i<cubeData.length;i+=3)d.push(b.x+cubeData[i]*VOX/2,b.y+cubeData[i+1]*b.h/2,b.z+cubeData[i+2]*VOX/2);}
 const voxelBatches=[...voxelBatchMap.values()].map(b=>({color:b.color,geometry:mesh(b.data)}));
-const state={running:false,paused:false,energy:100,ore:0,yaw:Math.PI,targetYaw:Math.PI,velocity:0,maxSpeed:12,direction:2};
+const state={running:false,paused:false,energy:100,ore:0,inventory:{iron:0,titanium:0,silicon:0},cargoCapacity:120,yaw:Math.PI,targetYaw:Math.PI,velocity:0,maxSpeed:12,direction:2};
 const departure={active:false,elapsed:0,door:0};
 const cameraFollow={x:0,z:-.7};
 const rover={x:0,z:-.7};
@@ -139,7 +144,7 @@ function drawOutpost(){
 const asteroidRim=[];
 for(let i=0;i<52;i++){const a=i*Math.PI*2/52,r=31+(i%4)*.55,h=1.1+(i%5)*.34;asteroidRim.push({x:Math.cos(a)*r,z:Math.sin(a)*r,h,rot:-a,color:[.27+(i%3)*.025,.26+(i%3)*.025,.25+(i%3)*.025]});}
 
-updateBuildCount();
+updateBuildCount();updateInventoryUI();
 
 const keys=new Set();
 function turnRover(dir){state.direction=(state.direction+dir+4)%4;state.targetYaw=state.direction*Math.PI/2;}
@@ -150,7 +155,27 @@ function showToast(s){toast.textContent=s;toast.style.opacity="1";clearTimeout(t
 function start(){state.running=true;state.paused=false;keys.clear();rover.x=0;rover.z=-.7;cameraFollow.x=rover.x;cameraFollow.z=rover.z;state.yaw=Math.PI;state.targetYaw=Math.PI;state.direction=2;state.velocity=0;departure.active=true;departure.elapsed=0;departure.door=0;menu.classList.add("hidden");pause.classList.add("hidden");settings.classList.add("hidden");document.querySelector("#objective").textContent="Выезд из ангара: автоматическая последовательность";showToast("Открывается гараж. Подготовка к выезду…");}
 function togglePause(){if(!state.running)return;state.paused=!state.paused;pause.classList.toggle("hidden",!state.paused);}
 function quit(){state.running=false;state.paused=false;departure.active=false;keys.clear();pause.classList.add("hidden");menu.classList.remove("hidden");}
-function mine(){let nearest=null,distance=2.4;ores.forEach(n=>{const d=Math.hypot(n.x-rover.x,n.z-rover.z);if(n.available&&d<distance){nearest=n;distance=d;}});if(!nearest){showToast("Нет залежей поблизости");return;}nearest.available=false;state.ore+=nearest.cells.length*6;state.energy=Math.max(0,state.energy-3);document.querySelector("#ore").textContent=state.ore;document.querySelector("#energy").textContent=Math.round(state.energy);showToast("Месторождение добыто: "+nearest.cells.length+" блок.");document.querySelector("#objective").textContent=state.ore>=60?"Цель выполнена: ресурсы собраны":"Продолжайте сбор минералов";}
+function updateInventoryUI(){
+ const total=state.inventory.iron+state.inventory.titanium+state.inventory.silicon;
+ document.querySelector("#ore").textContent=total;
+ document.querySelector("#cargo-total").textContent=total+" / "+state.cargoCapacity+" кг";
+ document.querySelector("#cargo-fill").style.width=(total/state.cargoCapacity*100)+"%";
+ for(const id of Object.keys(state.inventory))document.querySelector("#"+id+"-amount").textContent=state.inventory[id]+" кг";
+}
+function mine(){
+ let nearest=null,distance=2.4;
+ ores.forEach(n=>{const d=Math.hypot(n.x-rover.x,n.z-rover.z);if(n.available&&d<distance){nearest=n;distance=d;}});
+ if(!nearest){showToast("Нет залежей поблизости");return;}
+ if(state.energy<3){showToast("Недостаточно энергии для бурения");return;}
+ const total=state.inventory.iron+state.inventory.titanium+state.inventory.silicon;
+ const amount=nearest.cells.length*6;
+ if(total+amount>state.cargoCapacity){showToast("Контейнер заполнен. Освободите место на базе.");return;}
+ nearest.available=false;state.inventory[nearest.resource.id]+=amount;state.ore+=amount;
+ state.energy=Math.max(0,state.energy-3);
+ updateInventoryUI();document.querySelector("#energy").textContent=Math.round(state.energy);
+ showToast(nearest.resource.label+": добыто "+amount+" кг");
+ document.querySelector("#objective").textContent=state.ore>=60?"Цель выполнена: собрано 60 кг ресурсов":"Соберите не менее 60 кг минералов";
+}
 
 document.querySelector("#start-btn").onclick=start;document.querySelector("#resume-btn").onclick=togglePause;document.querySelector("#quit-btn").onclick=quit;
 document.querySelector("#settings-btn").onclick=()=>{menu.classList.add("hidden");settings.classList.remove("hidden");};document.querySelector("#settings-back").onclick=()=>{settings.classList.add("hidden");menu.classList.remove("hidden");};
@@ -186,7 +211,7 @@ voxelBatches.forEach(b=>draw(matIdentity(),b.color,b.geometry));
 asteroidRim.forEach(r=>draw(model(r.x,r.h*.38,r.z,1.55,r.h,r.h*.92,r.rot),r.color));
 drawOutpost();
 rocks.forEach(r=>draw(model(r.x,terrainTop(r.x,r.z)+r.s*.5,r.z,r.s,r.s,r.s),r.color));
-ores.forEach(n=>{if(n.available)n.cells.forEach(c=>draw(model(c.x,terrainTop(c.x,c.z)+.62+Math.sin(now*.001+n.phase)*.035,c.z,VOX*.43,VOX*.43,VOX*.43),[.22,.72,.58]));});
+ores.forEach(n=>{if(n.available)n.cells.forEach(c=>draw(model(c.x,terrainTop(c.x,c.z)+.62+Math.sin(now*.001+n.phase)*.035,c.z,VOX*.43,VOX*.43,VOX*.43),n.resource.color));});
 baseModules.forEach(drawBaseModule);
 const ry=state.yaw;
 draw(model(rover.x,terrainTop(rover.x,rover.z)+1.0,rover.z,1.0,.28,1.25,ry),[.72,.74,.7]);
