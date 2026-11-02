@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#090d18">
-  <title>Лунная База — автономный статичный проект</title>
+  <title>Лунная База — Sky-Fi</title>
   <link rel="stylesheet" href="./styles/main.css">
 </head>
 <body>
@@ -13,15 +13,6 @@
     <div class="objective"><span class="pulse"></span><div><small>ТЕКУЩАЯ ЗАДАЧА</small><b id="objective">Исследуйте лунную поверхность</b></div></div>
     <div class="controls-hint">W/S — плавное движение <span>·</span> A/D или ←/→ — плавный поворот на 90° <span>·</span> E — добыча <span>·</span> ESC — меню</div>
   </div>
-  <aside id="build-panel" aria-label="Панель строительства">
-    <div class="build-head"><span class="pulse"></span><div><small>КОНСТРУКТОР</small><b>МОДУЛИ БАЗЫ</b></div></div>
-    <button class="module-choice active" data-module="habitat"><span class="module-icon">⌂</span><span><b>Жилой модуль</b><small>1 · укрытие</small></span></button>
-    <button class="module-choice" data-module="solar"><span class="module-icon">▦</span><span><b>Солнечная панель</b><small>2 · энергия</small></span></button>
-    <button class="module-choice" data-module="storage"><span class="module-icon">▣</span><span><b>Склад ресурсов</b><small>3 · хранение</small></span></button>
-    <button class="module-choice" data-module="lab"><span class="module-icon">⌬</span><span><b>Лаборатория</b><small>4 · исследования</small></span></button>
-    <div class="build-actions"><button id="place-module" class="primary">ПОСТРОИТЬ <span>↗</span></button><button id="rotate-module" class="secondary">ПОВОРОТ R</button><button id="remove-module" class="secondary">УБРАТЬ БЛИЖАЙШИЙ</button></div>
-    <div class="build-foot"><span id="build-count">Построек: 0</span><span>СОХРАНЕНИЕ: ЛОКАЛЬНО</span></div>
-  </aside>
   <aside id="inventory-panel" aria-label="Грузовой контейнер">
     <div class="inventory-head"><span class="pulse"></span><div><small>ГРУЗОВОЙ ОТСЕК</small><b>МИНЕРАЛЫ</b></div></div>
     <div class="cargo-meta"><span>ЗАПОЛНЕНИЕ</span><b id="cargo-total">0 / 120 кг</b></div>
@@ -32,8 +23,25 @@
     <small class="inventory-tip">E — добыть залежь рядом</small>
   </aside>
   <aside id="ore-radar" aria-label="Карта месторождений"><div class="radar-title">СКАНЕР РЕСУРСОВ <b id="radar-count">24</b></div><canvas id="radar-canvas" width="180" height="180"></canvas><div class="radar-legend"><span><i class="iron"></i>Fe</span><span><i class="titanium"></i>Ti</span><span><i class="silicon"></i>Si</span></div></aside>
+  <button id="open-build-modal" class="build-launcher">⌘ СТРОИТЕЛЬСТВО</button>
+  <section id="build-modal" class="build-modal hidden"><div class="build-window">
+    <header class="build-modal-head"><div><small>SKY-FI / BASE SYSTEMS</small><h2>Конструктор базы</h2><p>Выберите модуль, переместите курсор на площадку и подтвердите установку кликом.</p></div><button id="close-build-modal" class="modal-close">×</button></header>
+    <div class="build-layout"><nav class="build-catalog">
+      <button class="module-choice active" data-module="solar"><span class="module-icon">▦</span><span><b>Солнечная панель</b><small>3.1 × 2.5 м</small></span></button>
+      <button class="module-choice" data-module="storage"><span class="module-icon">▣</span><span><b>Склад ресурсов</b><small>2.5 × 2.5 м</small></span></button>
+      <button class="module-choice" data-module="lab"><span class="module-icon">⌬</span><span><b>Лаборатория</b><small>2.7 × 2.7 м</small></span></button>
+      <button class="module-choice" data-module="habitat"><span class="module-icon">⌂</span><span><b>Жилой модуль</b><small>2.9 × 2.9 м</small></span></button>
+      <button class="module-choice" data-module="comms"><span class="module-icon">⌁</span><span><b>Связь</b><small>3 × 3 м</small></span></button>
+      <button class="module-choice" data-module="landing"><span class="module-icon">⬡</span><span><b>Посадочная площадка</b><small>5 × 5 м</small></span></button>
+      <button class="module-choice" data-module="factory"><span class="module-icon">⚙</span><span><b>Производство</b><small>3.5 × 3.5 м</small></span></button>
+    </nav><div class="build-workspace">
+      <div class="build-instructions"><i></i><b id="placement-status">Выберите модуль</b><span>ЛКМ — поставить / выбрать · перетаскивание — переместить · R — поворот</span></div>
+      <div class="build-info"><div><small>ВЫБРАНО</small><b id="selected-name">Солнечная панель</b></div><div><small>ГАБАРИТЫ</small><b id="selected-size">3.1 × 2.5 м</b></div><div><small>ПОСТРОЕК</small><b id="build-count">0</b></div></div>
+      <div class="build-toolbar"><button id="rotate-module" class="secondary">↻ ПОВОРОТ 90°</button><button id="cancel-placement" class="secondary">ОТМЕНА</button><button id="remove-module" class="secondary">УДАЛИТЬ</button></div>
+    </div></div><footer class="build-modal-foot"><span>SKY-FI CONSTRUCTION STUDIO</span><span>Автосохранение в браузере</span></footer>
+  </div></section>
   <div id="crosshair">＋</div><div id="toast" role="status"></div>
-  <section id="menu" class="overlay"><div class="menu-panel"><div class="eyebrow">MISSION CONTROL / 01</div><h1>ЛУННАЯ<br><em>БАЗА</em></h1><p>Исследуй поверхность. Собирай ресурсы.<br>Подготовь место для первой базы.</p><button id="start-btn" class="primary">НАЧАТЬ ЭКСПЕДИЦИЮ <span>↗</span></button><button id="settings-btn" class="secondary">НАСТРОЙКИ</button><div class="menu-foot">VOXEL DIORAMA · FIXED CAMERA · OFFLINE</div></div></section>
+  <section id="menu" class="overlay"><div class="menu-panel"><div class="eyebrow">MISSION CONTROL / 01</div><h1>ЛУННАЯ<br><em>БАЗА</em></h1><p>Исследуй поверхность. Собирай ресурсы.<br>Подготовь место для первой базы.</p><button id="start-btn" class="primary">НАЧАТЬ ЭКСПЕДИЦИЮ <span>↗</span></button><button id="settings-btn" class="secondary">НАСТРОЙКИ</button><a class="secondary menu-link" href="./construction.html">ПОЛИГОН СТРОИТЕЛЬСТВА ↗</a><div class="menu-foot">VOXEL DIORAMA · FIXED CAMERA · OFFLINE</div></div></section>
   <section id="settings" class="overlay hidden"><div class="menu-panel settings-panel"><div class="eyebrow">CONFIGURATION</div><h2>НАСТРОЙКИ</h2><label>Скорость ровера <output id="speed-value">12</output><input id="max-speed" type="range" min="4" max="24" step="1" value="12"></label><label class="toggle-row">Звук (позже)<input type="checkbox" id="sound" checked></label><button id="settings-back" class="primary">НАЗАД</button></div></section>
   <section id="pause" class="overlay hidden"><div class="menu-panel"><div class="eyebrow">MISSION PAUSED</div><h2>ПАУЗА</h2><button id="resume-btn" class="primary">ПРОДОЛЖИТЬ</button><button id="quit-btn" class="secondary">В ГЛАВНОЕ МЕНЮ</button></div></section>
 </div>
