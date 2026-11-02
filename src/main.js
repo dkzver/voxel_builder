@@ -28,7 +28,7 @@ for(let i=0;i<115;i++){const a=rand()*Math.PI*2,d=8+rand()*20,r=1+rand()*2.8;ter
 for(let i=0;i<170;i++){const a=rand()*Math.PI*2,d=12+rand()*22,s=.2+rand()*.8;rocks.push({x:Math.cos(a)*d,z:Math.sin(a)*d,s,color:[.42+rand()*.12,.4+rand()*.12,.38+rand()*.12],rot:rand()*6});}
 for(let i=0;i<22;i++){const a=rand()*Math.PI*2,d=12+rand()*15;ores.push({x:Math.cos(a)*d,z:Math.sin(a)*d,available:true,phase:rand()*6});}
 // Hand-built voxel asteroid surface: stepped shelves, a flatter starter-base plateau and a rocky perimeter.
-for(let gx=-10;gx<=10;gx++)for(let gz=-10;gz<=10;gz++){const x=gx*3,z=gz*3,r=Math.hypot(x,z);if(r>30)continue;const n=Math.sin(gx*1.71+gz*.63)*.22+Math.cos(gz*1.27-gx*.42)*.18;const h=r<12?.72:Math.max(.55,1.05+(r-12)*.045+n);const shade=.31+((gx*7+gz*11+210)%5)*.018;voxelGround.push({x,y:-.35+h/2,z,h,color:[shade,shade*.98,shade*.94]});}
+for(let gx=-10;gx<=10;gx++)for(let gz=-10;gz<=10;gz++){const x=gx*3,z=gz*3,r=Math.hypot(x,z);if(r>30)continue;const n=Math.sin(gx*1.71+gz*.63)*.22+Math.cos(gz*1.27-gx*.42)*.18;const h=r<17?.42:Math.max(.55,1.05+(r-17)*.045+n);const shade=.31+((gx*7+gz*11+210)%5)*.018;voxelGround.push({x,y:-.35+h/2,z,h,color:[shade,shade*.98,shade*.94]});}
 const state={running:false,paused:false,energy:100,ore:0,yaw:0,velocity:0,maxSpeed:12,};
 const cameraFollow={x:0,z:0};
 const rover={x:0,z:10};
