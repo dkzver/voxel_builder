@@ -22,6 +22,15 @@
     <div class="build-actions"><button id="place-module" class="primary">ПОСТРОИТЬ <span>↗</span></button><button id="rotate-module" class="secondary">ПОВОРОТ R</button><button id="remove-module" class="secondary">УБРАТЬ БЛИЖАЙШИЙ</button></div>
     <div class="build-foot"><span id="build-count">Построек: 0</span><span>СОХРАНЕНИЕ: ЛОКАЛЬНО</span></div>
   </aside>
+  <aside id="inventory-panel" aria-label="Грузовой контейнер">
+    <div class="inventory-head"><span class="pulse"></span><div><small>ГРУЗОВОЙ ОТСЕК</small><b>МИНЕРАЛЫ</b></div></div>
+    <div class="cargo-meta"><span>ЗАПОЛНЕНИЕ</span><b id="cargo-total">0 / 120 кг</b></div>
+    <div class="cargo-track"><span id="cargo-fill"></span></div>
+    <div class="resource-row"><i class="resource-dot iron"></i><span>Железо</span><b id="iron-amount">0 кг</b></div>
+    <div class="resource-row"><i class="resource-dot titanium"></i><span>Титан</span><b id="titanium-amount">0 кг</b></div>
+    <div class="resource-row"><i class="resource-dot silicon"></i><span>Кремний</span><b id="silicon-amount">0 кг</b></div>
+    <small class="inventory-tip">E — добыть залежь рядом</small>
+  </aside>
   <div id="crosshair">＋</div><div id="toast" role="status"></div>
   <section id="menu" class="overlay"><div class="menu-panel"><div class="eyebrow">MISSION CONTROL / 01</div><h1>ЛУННАЯ<br><em>БАЗА</em></h1><p>Исследуй поверхность. Собирай ресурсы.<br>Подготовь место для первой базы.</p><button id="start-btn" class="primary">НАЧАТЬ ЭКСПЕДИЦИЮ <span>↗</span></button><button id="settings-btn" class="secondary">НАСТРОЙКИ</button><div class="menu-foot">VOXEL DIORAMA · FIXED CAMERA · OFFLINE</div></div></section>
   <section id="settings" class="overlay hidden"><div class="menu-panel settings-panel"><div class="eyebrow">CONFIGURATION</div><h2>НАСТРОЙКИ</h2><label>Скорость ровера <output id="speed-value">12</output><input id="max-speed" type="range" min="4" max="24" step="1" value="12"></label><label class="toggle-row">Звук (позже)<input type="checkbox" id="sound" checked></label><button id="settings-back" class="primary">НАЗАД</button></div></section>
