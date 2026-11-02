@@ -48,8 +48,8 @@ const moduleCatalog={
 };
 let selectedModule="habitat",moduleRotation=0;
 let baseModules=[];
-try{const saved=JSON.parse(localStorage.getItem("lunar-base-modules-v1")||"null");if(Array.isArray(saved)&&saved.length>0)baseModules=saved.filter(m=>moduleCatalog[m.type]&&Number.isFinite(m.x)&&Number.isFinite(m.z));else baseModules=[{id:"starter-habitat",type:"habitat",x:0,z:0,rotation:0},{id:"starter-solar-a",type:"solar",x:-5,z:0,rotation:0},{id:"starter-storage",type:"storage",x:4,z:0,rotation:0},{id:"starter-lab",type:"lab",x:0,z:-5,rotation:0}];}catch(_){baseModules=[{id:"starter-habitat",type:"habitat",x:0,z:0,rotation:0},{id:"starter-solar-a",type:"solar",x:-5,z:0,rotation:0},{id:"starter-storage",type:"storage",x:4,z:0,rotation:0},{id:"starter-lab",type:"lab",x:0,z:-5,rotation:0}];}
-function persistBase(){try{localStorage.setItem("lunar-base-modules-v1",JSON.stringify(baseModules));}catch(_){showToast("Не удалось сохранить базу (storage unavailable)");}}
+try{const saved=JSON.parse(localStorage.getItem("lunar-base-modules-v2")||"null");if(Array.isArray(saved)&&saved.length>0)baseModules=saved.filter(m=>moduleCatalog[m.type]&&Number.isFinite(m.x)&&Number.isFinite(m.z));else baseModules=[{id:"starter-habitat",type:"habitat",x:0,z:-10,rotation:0},{id:"starter-solar-a",type:"solar",x:-5,z:-10,rotation:0},{id:"starter-storage",type:"storage",x:4,z:-10,rotation:0},{id:"starter-lab",type:"lab",x:0,z:-15,rotation:0}];}catch(_){baseModules=[{id:"starter-habitat",type:"habitat",x:0,z:-10,rotation:0},{id:"starter-solar-a",type:"solar",x:-5,z:-10,rotation:0},{id:"starter-storage",type:"storage",x:4,z:-10,rotation:0},{id:"starter-lab",type:"lab",x:0,z:-15,rotation:0}];}
+function persistBase(){try{localStorage.setItem("lunar-base-modules-v2",JSON.stringify(baseModules));}catch(_){showToast("Не удалось сохранить базу (storage unavailable)");}}
 function updateBuildCount(){const el=document.querySelector("#build-count");if(el)el.textContent="Построек: "+baseModules.length;}
 function selectModule(type){if(!moduleCatalog[type])return;selectedModule=type;document.querySelectorAll(".module-choice").forEach(b=>b.classList.toggle("active",b.dataset.module===type));}
 document.querySelectorAll(".module-choice").forEach(b=>b.addEventListener("click",()=>selectModule(b.dataset.module)));
@@ -109,7 +109,7 @@ function drawOutpost(){
  // Landing apron and painted guidance markings.
  b(9,.1,8,4.35,.12,4.35,[.22,.25,.27]);
  // Driveway at the mountain foot, linking the hangar mouth and rover apron.
- for(let i=0;i<12;i++){const z=-1+i*.78;b(0,.10,z,2.7,.09,.36,[.38,.4,.39]);b(-2.9,.17,z,.08,.16,.08,amber);b(2.9,.17,z,.08,.16,.08,amber);}
+ for(let i=0;i<19;i++){const z=-6+i*.78;b(0,.10,z,2.7,.09,.36,[.38,.4,.39]);b(-2.9,.17,z,.08,.16,.08,amber);b(2.9,.17,z,.08,.16,.08,amber);}
  // Block-framed hangar entrance and guidance lamps.
  b(-5.9,2.25,-6,.18,2.25,.18,steel);b(5.9,2.25,-6,.18,2.25,.18,steel);b(0,4.45,-6,5.9,.18,.18,steel);for(let i=-4;i<=4;i+=2)b(i,3.95,-5.82,.16,.16,.16,cyan);
  b(9,.19,8,3.72,.035,3.72,[.36,.39,.39]);
