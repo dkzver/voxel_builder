@@ -329,6 +329,11 @@ drawOutpost();
 rocks.forEach(r=>draw(model(r.x,terrainTop(r.x,r.z)+r.s*.5,r.z,r.s,r.s,r.s),r.color));
 ores.forEach(n=>{if(n.available){n.cells.forEach(c=>draw(model(c.x,terrainTop(c.x,c.z)+.62+Math.sin(now*.001+n.phase)*.035,c.z,VOX*.48,VOX*.48,VOX*.48),n.resource.color));const gy=terrainTop(n.x,n.z),pulse=.12+Math.sin(now*.002+n.phase)*.035;draw(model(n.x,gy+1.35,n.z,.09,.72,.09),n.resource.color);draw(model(n.x,gy+2.08,n.z,.3+pulse,.3+pulse,.3+pulse),n.resource.color,oct);draw(model(n.x,gy+2.48,n.z,.12,.12,.12),[.92,.94,.82],oct);}});
 baseModules.forEach(drawBaseModule);
+if(pendingPlacement&&previewWorld){
+ const ground=terrainTop(previewWorld.x,previewWorld.z),f=footprint(selectedModule,moduleRotation),color=previewValid?[.18,.88,.28]:[.95,.12,.18];
+ draw(model(previewWorld.x,ground+.22,previewWorld.z,f.x/2,.12,f.z/2,moduleRotation),color);
+ draw(model(previewWorld.x,ground+.37,previewWorld.z,.13,.13,.13),color);
+}
 const chosen=baseModules.find(m=>m.id===selectedBuildingId);if(chosen)draw(model(chosen.x,terrainTop(chosen.x,chosen.z)+.18,chosen.z,moduleCatalog[chosen.type].size[0]*1.18,.035,moduleCatalog[chosen.type].size[2]*1.18,chosen.rotation||0),[.22,.9,1]);
 const ry=state.yaw;
 const chassis=(lx,ly,lz,sx,sy,sz,color)=>{const p=localPoint(lx,ly,lz,ry);draw(model(p.x,p.y,p.z,sx,sy,sz,ry),color);};
