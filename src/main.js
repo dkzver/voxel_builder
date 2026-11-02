@@ -13,6 +13,8 @@ function mesh(data){const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);g
 const cubeData=[];const faces=[[-1,-1,1,1,-1,1,1,1,1,-1,1,1],[1,-1,-1,-1,-1,-1,-1,1,-1,1,1,-1],[-1,1,1,1,1,1,1,1,-1,-1,1,-1],[-1,-1,-1,1,-1,-1,1,-1,1,-1,-1,1],[1,-1,1,1,-1,-1,1,1,-1,1,1,1],[-1,-1,-1,-1,-1,1,-1,1,1,-1,1,-1]];
 faces.forEach(f=>{const v=[[f[0],f[1],f[2]],[f[3],f[4],f[5]],[f[6],f[7],f[8]],[f[9],f[10],f[11]]];[0,1,2,0,2,3].forEach(i=>cubeData.push(...v[i]));});
 const cube=mesh(cubeData);
+function makeWheelGeometry(segments=12){const data=[];for(let i=0;i<segments;i++){const a=i*Math.PI*2/segments,b=(i+1)*Math.PI*2/segments,y1=Math.cos(a),z1=Math.sin(a),y2=Math.cos(b),z2=Math.sin(b);data.push(-1,y1,z1,1,y1,z1,1,y2,z2,-1,y1,z1,1,y2,z2,-1,y2,z2, -1,0,0,-1,y2,z2,-1,y1,z1, 1,0,0,1,y1,z1,1,y2,z2);}return mesh(data);}
+const wheelGeometry=makeWheelGeometry();
 const octData=[];const o=[[0,1,0],[1,0,0],[0,0,1],[-1,0,0],[0,0,-1],[0,-1,0]];[[0,1,2],[0,2,3],[0,3,4],[0,4,1],[5,2,1],[5,3,2],[5,4,3],[5,1,4]].forEach(t=>t.forEach(i=>octData.push(...o[i])));const oct=mesh(octData);
 function matIdentity(){return [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];}
 function model(x,y,z,sx,sy,sz,rot=0){const c=Math.cos(rot),s=Math.sin(rot);return [c*sx,0,-s*sx,0,0,sy,0,0,s*sz,0,c*sz,0,x,y,z,1];}
@@ -238,7 +240,7 @@ baseModules.forEach(drawBaseModule);
 const ry=state.yaw;
 const chassis=(lx,ly,lz,sx,sy,sz,color)=>{const p=localPoint(lx,ly,lz,ry);draw(model(p.x,p.y,p.z,sx,sy,sz,ry),color);};
 chassis(0,1.0,0,1.0,.28,1.25,[.72,.74,.7]);chassis(0,1.34,-.18,.58,.34,.58,[.14,.2,.24]);chassis(0,1.48,-.18,.42,.19,.42,[.12,.42,.5]);
-for(const side of [-1,1])for(const front of [-1,1]){const p=localPoint(side*.92,.48,front*.82,ry);draw(modelAxle(p.x,p.y,p.z,.19,.4,.4,ry,wheelTravel),[.075,.09,.11]);draw(modelAxle(p.x,p.y,p.z,.195,.27,.27,ry,wheelTravel),[.42,.46,.47]);}
+for(const side of [-1,1])for(const front of [-1,1]){const p=localPoint(side*.92,.48,front*.82,ry);draw(modelAxle(p.x,p.y,p.z,.19,.4,.4,ry,wheelTravel),[.075,.09,.11],wheelGeometry);draw(modelAxle(p.x,p.y,p.z,.195,.27,.27,ry,wheelTravel),[.42,.46,.47],wheelGeometry);}
 const ba=roverParts.bucketAngle;
 for(const side of [-1,1]){const arm=localPoint(side*.42,1.08,-1.28,ry);draw(modelAxle(arm.x,arm.y,arm.z,.105,.13,.72,ry,ba),[.78,.53,.22]);}
 const bucket=localPoint(0,.83,-1.75,ry);draw(modelAxle(bucket.x,bucket.y,bucket.z,.52,.18,.38,ry,ba),[.82,.57,.24]);
