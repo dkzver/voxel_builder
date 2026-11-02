@@ -60,7 +60,10 @@ const moduleCatalog={
  habitat:{label:"Жилой модуль",color:[.72,.76,.72],size:[1.45,1.05,1.45]},
  solar:{label:"Солнечная панель",color:[.2,.42,.72],size:[1.55,.12,1.25]},
  storage:{label:"Склад ресурсов",color:[.68,.48,.28],size:[1.25,.85,1.25]},
- lab:{label:"Лаборатория",color:[.58,.68,.76],size:[1.35,1,1.35]},\n comms:{label:"Коммуникационный узел",color:[.24,.66,.72],size:[1.35,1.35,1.35]},\n landing:{label:"Посадочная площадка",color:[.68,.72,.68],size:[2.5,.12,2.5]},\n factory:{label:"Производственный модуль",color:[.72,.48,.28],size:[1.75,1.15,1.75]}
+ lab:{label:"Лаборатория",color:[.58,.68,.76],size:[1.35,1,1.35]},
+ comms:{label:"Коммуникационный узел",color:[.24,.66,.72],size:[1.35,1.35,1.35]},
+ landing:{label:"Посадочная площадка",color:[.68,.72,.68],size:[2.5,.12,2.5]},
+ factory:{label:"Производственный модуль",color:[.72,.48,.28],size:[1.75,1.15,1.75]}
 };
 let selectedModule="habitat",moduleRotation=0;
 let baseModules=[];
@@ -127,7 +130,13 @@ function drawBaseModule(m){
   box(m.x,.94,m.z-1.36,.42,.48,.035,orange);
   for(let i=-1;i<=1;i++)box(m.x+i*.35,.94,m.z+1.3,.12,.46,.08,light);
   box(m.x-.9,1.25,m.z,.18,.16,.18,orange);
- }else if(m.type==="comms"){\n  box(m.x,.8,m.z,1.1,.8,1.1,def.color);box(m.x,2,m.z,.12,1.1,.12,metal);box(m.x,3.1,m.z,.7,.08,.08,light);box(m.x,3.1,m.z,.08,.7,.08,light);\n }else if(m.type==="landing"){\n  box(m.x,.2,m.z,2.45,.12,2.45,[.34,.39,.4]);for(let q=-1;q<=1;q+=2){box(m.x+q*1.9,.3,m.z,.08,.2,2.05,[.9,.62,.25]);box(m.x,.3,m.z+q*1.9,2.05,.2,.08,[.9,.62,.25]);}\n }else if(m.type==="factory"){\n  box(m.x,.95,m.z,1.72,.95,1.72,def.color);box(m.x,2.05,m.z,.9,.18,.9,metal);for(let q=-1;q<=1;q++)box(m.x+q*.58,2.42,m.z,.16,.5,.16,orange);\n }else if(m.type==="lab"){
+ }else if(m.type==="comms"){
+  box(m.x,.8,m.z,1.1,.8,1.1,def.color);box(m.x,2,m.z,.12,1.1,.12,metal);box(m.x,3.1,m.z,.7,.08,.08,light);box(m.x,3.1,m.z,.08,.7,.08,light);
+ }else if(m.type==="landing"){
+  box(m.x,.2,m.z,2.45,.12,2.45,[.34,.39,.4]);for(let q=-1;q<=1;q+=2){box(m.x+q*1.9,.3,m.z,.08,.2,2.05,[.9,.62,.25]);box(m.x,.3,m.z+q*1.9,2.05,.2,.08,[.9,.62,.25]);}
+ }else if(m.type==="factory"){
+  box(m.x,.95,m.z,1.72,.95,1.72,def.color);box(m.x,2.05,m.z,.9,.18,.9,metal);for(let q=-1;q<=1;q++)box(m.x+q*.58,2.42,m.z,.16,.5,.16,orange);
+ }else if(m.type==="lab"){
   box(m.x,.96,m.z,1.35,1,1.35,def.color);
   box(m.x,1.2,m.z-1.37,.82,.34,.07,[.12,.62,.67]);
   box(m.x,1.92,m.z,.72,.14,.72,light);
@@ -254,7 +263,8 @@ asteroidRim.forEach(r=>draw(model(r.x,r.h*.38,r.z,1.55,r.h,r.h*.92,r.rot),r.colo
 drawOutpost();
 rocks.forEach(r=>draw(model(r.x,terrainTop(r.x,r.z)+r.s*.5,r.z,r.s,r.s,r.s),r.color));
 ores.forEach(n=>{if(n.available){n.cells.forEach(c=>draw(model(c.x,terrainTop(c.x,c.z)+.62+Math.sin(now*.001+n.phase)*.035,c.z,VOX*.48,VOX*.48,VOX*.48),n.resource.color));const gy=terrainTop(n.x,n.z),pulse=.12+Math.sin(now*.002+n.phase)*.035;draw(model(n.x,gy+1.35,n.z,.09,.72,.09),n.resource.color);draw(model(n.x,gy+2.08,n.z,.3+pulse,.3+pulse,.3+pulse),n.resource.color,oct);draw(model(n.x,gy+2.48,n.z,.12,.12,.12),[.92,.94,.82],oct);}});
-baseModules.forEach(drawBaseModule);\nconst chosen=baseModules.find(m=>m.id===selectedBuildingId);if(chosen)draw(model(chosen.x,terrainTop(chosen.x,chosen.z)+.18,chosen.z,moduleCatalog[chosen.type].size[0]*1.18,.035,moduleCatalog[chosen.type].size[2]*1.18,chosen.rotation||0),[.22,.9,1]);
+baseModules.forEach(drawBaseModule);
+const chosen=baseModules.find(m=>m.id===selectedBuildingId);if(chosen)draw(model(chosen.x,terrainTop(chosen.x,chosen.z)+.18,chosen.z,moduleCatalog[chosen.type].size[0]*1.18,.035,moduleCatalog[chosen.type].size[2]*1.18,chosen.rotation||0),[.22,.9,1]);
 const ry=state.yaw;
 const chassis=(lx,ly,lz,sx,sy,sz,color)=>{const p=localPoint(lx,ly,lz,ry);draw(model(p.x,p.y,p.z,sx,sy,sz,ry),color);};
 chassis(0,1.0,0,1.0,.28,1.25,[.72,.74,.7]);chassis(0,1.34,-.18,.58,.34,.58,[.14,.2,.24]);chassis(0,1.48,-.18,.42,.19,.42,[.12,.42,.5]);
