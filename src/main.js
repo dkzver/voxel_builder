@@ -5,7 +5,7 @@ const canvas=document.createElement("canvas");canvas.id="game-canvas";document.q
 const gl=canvas.getContext("webgl",{antialias:true,alpha:false});
 if(!gl){document.querySelector("#objective").textContent="WebGL не поддерживается этим браузером";return;}
 const vs=`attribute vec3 aPosition; uniform mat4 uMvp; uniform mat4 uModel; varying vec3 vNormal; void main(){vec3 p=aPosition; vNormal=normalize(mat3(uModel)*p); gl_Position=uMvp*vec4(p,1.0);}`;
-const fs=`precision mediump float; uniform vec3 uColor; varying vec3 vNormal; void main(){vec3 n=normalize(vNormal);float light=.38+.62*max(dot(n,normalize(vec3(-.4,.85,.3))),0.0);gl_FragColor=vec4(uColor*light,1.0);}`;
+const fs=`precision mediump float; uniform vec3 uColor; void main(){gl_FragColor=vec4(uColor,1.0);}`;
 function shader(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s;}
 const program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,vs));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));gl.useProgram(program);
 const posLoc=gl.getAttribLocation(program,"aPosition"),mvpLoc=gl.getUniformLocation(program,"uMvp"),modelLoc=gl.getUniformLocation(program,"uModel"),colorLoc=gl.getUniformLocation(program,"uColor");
@@ -31,6 +31,11 @@ for(let i=0;i<230;i++){const a=rand()*Math.PI*2,d=10+rand()*19,v=.18+rand()*.42;
 for(let i=0;i<24;i++){const a=rand()*Math.PI*2,d=9+rand()*17,cx=Math.round(Math.cos(a)*d/VOX)*VOX,cz=Math.round(Math.sin(a)*d/VOX)*VOX,cells=[],count=1+Math.floor(rand()*4);for(let j=0;j<count;j++)cells.push({x:cx+(j%2)*VOX,z:cz+Math.floor(j/2)*VOX,y:.62});ores.push({x:cx,z:cz,cells,available:true,phase:rand()*6});}
 // Mountain behind the starter base, with a cave-like hangar carved into its front face.
 for(let gx=-15;gx<=15;gx++)for(let gz=-26;gz<=-7;gz++){const x=gx*VOX,z=gz*VOX,nx=Math.abs(x)/13,nz=Math.abs(z+14)/10,profile=1-nx*.72-nz*.58;if(profile<=0)continue;const top=Math.max(1,Math.floor((2+profile*9)/VOX));for(let gy=0;gy<top;gy++){const y=(gy+.5)*VOX,cave=Math.abs(x)<5.8&&z>-12.2&&z<-6.2&&y<4.25;if(cave)continue;const shade=.29+((gx*3+gz*5+gy*7+900)%6)*.012;mountainVoxels.push({x,y,z,color:[shade,shade*.98,shade*.94]});}}
+// Batch terrain and mountain voxels by flat material to avoid thousands of WebGL draw calls.
+const voxelBatchMap=new Map();
+for(const b of voxelGround){const c=b.color,k=c.join(",");if(!voxelBatchMap.has(k))voxelBatchMap.set(k,{color:c,data:[]});const d=voxelBatchMap.get(k).data;for(let i=0;i<cubeData.length;i+=3)d.push(b.x+cubeData[i]*VOX/2,b.y+cubeData[i+1]*b.h/2,b.z+cubeData[i+2]*VOX/2);}
+for(const b of mountainVoxels){const c=b.color,k=c.join(",");if(!voxelBatchMap.has(k))voxelBatchMap.set(k,{color:c,data:[]});const d=voxelBatchMap.get(k).data;for(let i=0;i<cubeData.length;i+=3)d.push(b.x+cubeData[i]*VOX/2,b.y+cubeData[i+1]*VOX/2,b.z+cubeData[i+2]*VOX/2);}
+const voxelBatches=[...voxelBatchMap.values()].map(b=>({color:b.color,geometry:mesh(b.data)}));
 const state={running:false,paused:false,energy:100,ore:0,yaw:0,velocity:0,maxSpeed:12,direction:0,stepTimer:0};
 const cameraFollow={x:0,z:0};
 const rover={x:0,z:10};
@@ -161,8 +166,7 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous
 if(state.running&&!state.paused){const forward=(keys.has("KeyW")||keys.has("ArrowUp")?1:0)-(keys.has("KeyS")||keys.has("ArrowDown")?1:0);const step=VOX;state.velocity=forward*state.maxSpeed;if(forward!==0){state.stepTimer+=dt;const interval=Math.max(.09,3.2/state.maxSpeed);while(state.stepTimer>=interval){rover.x-=Math.sin(state.yaw)*step*forward;rover.z-=Math.cos(state.yaw)*step*forward;state.stepTimer-=interval;}}else state.stepTimer=0;document.querySelector("#speed").textContent=Math.round(Math.abs(state.velocity)*3.6);if(forward!==0)state.energy=Math.max(0,state.energy-dt*.035);document.querySelector("#energy").textContent=Math.round(state.energy);}
 cameraFollow.x+=(rover.x-cameraFollow.x)*Math.min(1,dt*5);cameraFollow.z+=(rover.z-cameraFollow.z)*Math.min(1,dt*5);const eye=[cameraFollow.x+15,20,cameraFollow.z+17],center=[cameraFollow.x,0.8,cameraFollow.z];viewProjection=mul(perspective(Math.PI/4.2,canvas.width/canvas.height,.1,260),lookAt(eye,center));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 // The playable ground is assembled from voxel tiles; no infinite flat plane.
-voxelGround.forEach(b=>draw(model(b.x,b.y,b.z,VOX/2,b.h/2,VOX/2),b.color));
-mountainVoxels.forEach(b=>draw(model(b.x,b.y,b.z,VOX/2,VOX/2,VOX/2),b.color));
+voxelBatches.forEach(b=>draw(matIdentity(),b.color,b.geometry));
 asteroidRim.forEach(r=>draw(model(r.x,r.h*.38,r.z,1.55,r.h,r.h*.92,r.rot),r.color));
 drawOutpost();
 rocks.forEach(r=>draw(model(r.x,r.s*.5,r.z,r.s,r.s,r.s),r.color));
@@ -171,7 +175,7 @@ baseModules.forEach(drawBaseModule);
 const ry=state.yaw;
 draw(model(rover.x,1.0,rover.z,1.0,.28,1.25,ry),[.72,.74,.7]);
 draw(model(rover.x,1.34,rover.z-.18,.58,.34,.58,ry),[.14,.2,.24]);
-draw(model(rover.x,1.48,rover.z-.18,.42,.19,.42,ry),[.12,.42,.42],ry),[.12,.42,.5]);
+draw(model(rover.x,1.48,rover.z-.18,.42,.19,.42,ry),[.12,.42,.5]);
 draw(model(rover.x,1.68,rover.z+.85,1.35,.06,.48,ry),[.68,.48,.22]);
 for(const side of [-1,1])for(const front of [-1,1]){draw(model(rover.x+side*.92,.48,rover.z+front*.82,.18,.4,.4,ry),[.12,.15,.18]);draw(model(rover.x+side*.92,.48,rover.z+front*.82,.11,.26,.26,ry),[.38,.42,.42]);}
 draw(model(rover.x-.85,1.7,rover.z-.5,.12,.35,.12,ry),[.25,.28,.3]);draw(model(rover.x-.85,2.05,rover.z-.5,.18,.18,.18,ry),[.86,.62,.24]);
