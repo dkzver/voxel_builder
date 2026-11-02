@@ -29,6 +29,49 @@ for(let i=0;i<170;i++){const s=.2+rand()*1.0;rocks.push({x:(rand()-.5)*160,z:(ra
 for(let i=0;i<22;i++){let x=(rand()-.5)*100,z=(rand()-.5)*100;if(Math.hypot(x,z)<10)x+=18;ores.push({x,z,available:true,phase:rand()*6});}
 const state={running:false,paused:false,energy:100,ore:0,yaw:0,velocity:0,maxSpeed:12,sensitivity:.5,camYaw:0};
 const rover={x:0,z:0};
+// === Base construction system: static-client only, persisted in localStorage ===
+const moduleCatalog={
+ habitat:{label:"Жилой модуль",color:[.72,.76,.72],size:[1.45,1.05,1.45]},
+ solar:{label:"Солнечная панель",color:[.2,.42,.72],size:[1.55,.12,1.25]},
+ storage:{label:"Склад ресурсов",color:[.68,.48,.28],size:[1.25,.85,1.25]},
+ lab:{label:"Лаборатория",color:[.58,.68,.76],size:[1.35,1,1.35]}
+};
+let selectedModule="habitat",moduleRotation=0;
+let baseModules=[];
+try{const saved=JSON.parse(localStorage.getItem("lunar-base-modules-v1")||"[]");if(Array.isArray(saved))baseModules=saved.filter(m=>moduleCatalog[m.type]&&Number.isFinite(m.x)&&Number.isFinite(m.z));}catch(_){baseModules=[];}
+function persistBase(){try{localStorage.setItem("lunar-base-modules-v1",JSON.stringify(baseModules));}catch(_){showToast("Не удалось сохранить базу (storage unavailable)");}}
+function updateBuildCount(){const el=document.querySelector("#build-count");if(el)el.textContent="Построек: "+baseModules.length;}
+function selectModule(type){if(!moduleCatalog[type])return;selectedModule=type;document.querySelectorAll(".module-choice").forEach(b=>b.classList.toggle("active",b.dataset.module===type));}
+document.querySelectorAll(".module-choice").forEach(b=>b.addEventListener("click",()=>selectModule(b.dataset.module)));
+function targetBuildPosition(){const gx=-Math.sin(state.yaw),gz=-Math.cos(state.yaw);return {x:Math.round((rover.x+gx*5)/3.5)*3.5,z:Math.round((rover.z+gz*5)/3.5)*3.5};}
+function placeModule(){if(!state.running||state.paused){showToast("Начните экспедицию для строительства");return;}const p=targetBuildPosition();if(Math.hypot(p.x-rover.x,p.z-rover.z)<2.5){showToast("Слишком близко к роверу");return;}if(baseModules.some(m=>Math.hypot(m.x-p.x,m.z-p.z)<2.8)){showToast("Клетка занята другой постройкой");return;}baseModules.push({id:Date.now()+"-"+Math.floor(Math.random()*10000),type:selectedModule,x:p.x,z:p.z,rotation:moduleRotation});persistBase();updateBuildCount();showToast(moduleCatalog[selectedModule].label+" установлен");}
+function removeNearestModule(){let index=-1,best=8;for(let i=0;i<baseModules.length;i++){const d=Math.hypot(baseModules[i].x-rover.x,baseModules[i].z-rover.z);if(d<best){best=d;index=i;}}if(index<0){showToast("Нет построек в радиусе 8 м");return;}const removed=baseModules.splice(index,1)[0];persistBase();updateBuildCount();showToast(moduleCatalog[removed.type].label+" демонтирован");}
+document.querySelector("#place-module").addEventListener("click",placeModule);
+document.querySelector("#rotate-module").addEventListener("click",()=>{moduleRotation=(moduleRotation+Math.PI/2)%(Math.PI*2);showToast("Поворот: "+Math.round(moduleRotation*180/Math.PI)+"°");});
+document.querySelector("#remove-module").addEventListener("click",removeNearestModule);
+addEventListener("keydown",e=>{if(e.code==="KeyR"&&state.running&&!state.paused){moduleRotation=(moduleRotation+Math.PI/2)%(Math.PI*2);showToast("Поворот модуля");}if(e.code==="Digit1")selectModule("habitat");if(e.code==="Digit2")selectModule("solar");if(e.code==="Digit3")selectModule("storage");if(e.code==="Digit4")selectModule("lab");});
+function drawBaseModule(m){const def=moduleCatalog[m.type],r=m.rotation||0;
+draw(model(m.x,.12,m.z,1.65,.12,1.65,r),[.38,.38,.37]);
+if(m.type==="habitat"){
+ draw(model(m.x,.95,m.z,def.size[0],def.size[1],def.size[2],r),def.color);
+ draw(model(m.x,1.15,m.z-1.48,.62,.45,.12,r),[.12,.25,.34]);
+ draw(model(m.x,2.12,m.z,.18,.16,.18,r),[.75,.64,.38]);
+}else if(m.type==="solar"){
+ draw(model(m.x,.5,m.z,1.35,.12,.9,r),def.color);
+ draw(model(m.x,.32,m.z,1.55,.08,1.2,r),[.22,.25,.28]);
+ draw(model(m.x,.25,m.z, .12,.22,.12,r),[.68,.65,.58]);
+}else if(m.type==="storage"){
+ draw(model(m.x,.82,m.z,def.size[0],def.size[1],def.size[2],r),def.color);
+ draw(model(m.x,.86,m.z-1.27,.42,.52,.1,r),[.28,.22,.14]);
+ draw(model(m.x,1.75,m.z,.12,.12,.12,r),[.78,.7,.42]);
+}else if(m.type==="lab"){
+ draw(model(m.x,.9,m.z,def.size[0],def.size[1],def.size[2],r),def.color);
+ draw(model(m.x,1.35,m.z-1.37,.6,.28,.12,r),[.2,.75,.68]);
+ draw(model(m.x,1.95,m.z,.12,.18,.12,r),[.68,.8,.9]);
+}
+}
+updateBuildCount();
+
 const keys=new Set();addEventListener("keydown",e=>{keys.add(e.code);if(["Space","ArrowUp","ArrowDown"].includes(e.code))e.preventDefault();if(e.code==="Escape")togglePause();if(e.code==="KeyE"&&state.running&&!state.paused)mine();});addEventListener("keyup",e=>keys.delete(e.code));
 canvas.addEventListener("click",()=>{if(state.running&&!state.paused)canvas.requestPointerLock?.();});addEventListener("mousemove",e=>{if(document.pointerLockElement===canvas&&state.running&&!state.paused)state.camYaw-=e.movementX*.002*state.sensitivity;});
 const menu=document.querySelector("#menu"),pause=document.querySelector("#pause"),settings=document.querySelector("#settings"),toast=document.querySelector("#toast");let toastTimer;
@@ -52,6 +95,7 @@ draw(model(0,-.65,0,130,.3,130),[.39,.37,.35]);
 terrain.forEach(t=>draw(model(t.x,t.y,t.z,t.r,t.r*.25,t.r,t.rot),t.color,oct));
 rocks.forEach(r=>draw(model(r.x,r.s*.5,r.z,r.s,r.s*.8,r.s,r.rot),r.color,oct));
 ores.forEach(n=>{if(n.available)draw(model(n.x,.85+Math.sin(now*.001+n.phase)*.12,n.z,.65,.85,.65,now*.0004+n.phase),[.25,.82,.69],oct);});
+baseModules.forEach(drawBaseModule);
 const ry=state.yaw;draw(model(rover.x,1.0,rover.z,1.15,.28,1.55,ry),[.72,.74,.7]);draw(model(rover.x,1.55,rover.z-.2,.65,.36,.55,ry),[.12,.17,.22]);draw(model(rover.x,1.68,rover.z+1.05,1.9,.06,.65,ry),[.68,.48,.22]);
 for(const side of [-1,1])for(const front of [-1,1])draw(model(rover.x+side*1.18,.48,rover.z+front*1.05,.2,.48,.48,ry),[.12,.15,.18]);
 }
