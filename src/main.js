@@ -95,11 +95,12 @@ function setPlacementMessage(message,valid){
  if(dot)dot.style.background=valid===false?"#ff5364":"#8bea65";
 }
 function openBuildCatalog(){pendingPlacement=false;document.querySelector("#build-modal").classList.remove("hidden");}
-function closeBuildCatalog(){document.querySelector("#build-modal").classList.add("hidden");}
+function closeBuildCatalog(){const modal=document.querySelector("#build-modal");if(modal)modal.classList.add("hidden");}
+function showPlacementHint(show){const hint=document.querySelector("#placement-hint");if(hint)hint.classList.toggle("hidden",!show);}
 function beginPlacement(type){
  if(!moduleCatalog[type])return;
  selectedModule=type;moduleRotation=0;selectedBuildingId=null;pendingPlacement=true;previewWorld=null;
- closeBuildCatalog();document.querySelector("#placement-hint").classList.remove("hidden");
+ closeBuildCatalog();showPlacementHint(true);
  setPlacementMessage("Переместите курсор по поверхности",true);
  refreshBuildingDock();
 }
@@ -107,7 +108,7 @@ document.querySelector("#open-build-modal").addEventListener("click",openBuildCa
 document.querySelector("#close-build-modal").addEventListener("click",closeBuildCatalog);
 document.querySelectorAll(".module-choice").forEach(button=>button.addEventListener("click",()=>beginPlacement(button.dataset.module)));
 function rotatePlacement(){moduleRotation=(moduleRotation+Math.PI/2)%(Math.PI*2);if(pendingPlacement)setPlacementMessage("Поворот: "+Math.round(moduleRotation*180/Math.PI)+"°",previewValid);}
-function cancelPlacement(){pendingPlacement=false;previewWorld=null;document.querySelector("#placement-hint").classList.add("hidden");refreshBuildingDock();}
+function cancelPlacement(){pendingPlacement=false;previewWorld=null;showPlacementHint(false);refreshBuildingDock();}
 function inverseMatrix(a){
  const out=new Array(16),a00=a[0],a01=a[1],a02=a[2],a03=a[3],a10=a[4],a11=a[5],a12=a[6],a13=a[7],a20=a[8],a21=a[9],a22=a[10],a23=a[11],a30=a[12],a31=a[13],a32=a[14],a33=a[15];
  const b00=a00*a11-a01*a10,b01=a00*a12-a02*a10,b02=a00*a13-a03*a10,b03=a01*a12-a02*a11,b04=a01*a13-a03*a11,b05=a02*a13-a03*a12,b06=a20*a31-a21*a30,b07=a20*a32-a22*a30,b08=a20*a33-a23*a30,b09=a21*a32-a22*a31,b10=a21*a33-a23*a31,b11=a22*a33-a23*a32;
@@ -142,7 +143,7 @@ function placePendingModule(){
  if(!check.ok){setPlacementMessage(check.reason,false);return;}
  const m={id:"build-"+Date.now()+"-"+Math.floor(Math.random()*10000),type:selectedModule,x:previewWorld.x,z:previewWorld.z,rotation:moduleRotation};
  baseModules.push(m);selectedBuildingId=m.id;persistBase();refreshBuildingDock();pendingPlacement=false;previewWorld=null;
- document.querySelector("#placement-hint").classList.add("hidden");showToast(moduleCatalog[m.type].label+" построена");
+ showPlacementHint(false);showToast(moduleCatalog[m.type].label+" построена");
 }
 function pickBuilding(p){
  if(!p)return null;let best=null,bestScore=Infinity;
