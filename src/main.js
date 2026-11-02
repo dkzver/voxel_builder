@@ -29,7 +29,7 @@ for(let i=0;i<170;i++){const s=.2+rand()*1.0;rocks.push({x:(rand()-.5)*160,z:(ra
 for(let i=0;i<22;i++){let x=(rand()-.5)*100,z=(rand()-.5)*100;if(Math.hypot(x,z)<10)x+=18;ores.push({x,z,available:true,phase:rand()*6});}
 // Hand-built voxel asteroid surface: stepped shelves, a flatter starter-base plateau and a rocky perimeter.
 for(let gx=-10;gx<=10;gx++)for(let gz=-10;gz<=10;gz++){const x=gx*3,z=gz*3,r=Math.hypot(x,z);if(r>30)continue;const n=Math.sin(gx*1.71+gz*.63)*.22+Math.cos(gz*1.27-gx*.42)*.18;const h=r<12?.72:Math.max(.55,1.05+(r-12)*.045+n);const shade=.31+((gx*7+gz*11+210)%5)*.018;voxelGround.push({x,y:-.35+h/2,z,h,color:[shade,shade*.98,shade*.94]});}
-const state={running:false,paused:false,energy:100,ore:0,yaw:0,velocity:0,maxSpeed:12,sensitivity:.5};
+const state={running:false,paused:false,energy:100,ore:0,yaw:0,velocity:0,maxSpeed:12,};
 const cameraFollow={x:0,z:0};
 const rover={x:0,z:10};
 // === Base construction system: static-client only, persisted in localStorage ===
@@ -85,7 +85,7 @@ function quit(){state.running=false;state.paused=false;pause.classList.add("hidd
 function mine(){let nearest=null,distance=4.8;ores.forEach(n=>{const d=Math.hypot(n.x-rover.x,n.z-rover.z);if(n.available&&d<distance){nearest=n;distance=d;}});if(!nearest){showToast("Нет залежей поблизости");return;}nearest.available=false;state.ore+=12;state.energy=Math.max(0,state.energy-3);document.querySelector("#ore").textContent=state.ore;document.querySelector("#energy").textContent=Math.round(state.energy);showToast("+12 кг минералов");document.querySelector("#objective").textContent=state.ore>=60?"Цель выполнена: ресурсы собраны":"Продолжайте сбор минералов";}
 document.querySelector("#start-btn").onclick=start;document.querySelector("#resume-btn").onclick=togglePause;document.querySelector("#quit-btn").onclick=quit;
 document.querySelector("#settings-btn").onclick=()=>{menu.classList.add("hidden");settings.classList.remove("hidden");};document.querySelector("#settings-back").onclick=()=>{settings.classList.add("hidden");menu.classList.remove("hidden");};
-document.querySelector("#sensitivity").oninput=e=>{state.sensitivity=+e.target.value;document.querySelector("#sens-value").value=e.target.value;};
+
 document.querySelector("#max-speed").oninput=e=>{state.maxSpeed=+e.target.value;document.querySelector("#speed-value").value=e.target.value;};
 document.querySelector("#sound").onchange=()=>showToast("Звук будет добавлен позднее");
 function resize(){const dpr=Math.min(devicePixelRatio||1,1.5);canvas.width=Math.floor(innerWidth*dpr);canvas.height=Math.floor(innerHeight*dpr);canvas.style.width="100%";canvas.style.height="100%";gl.viewport(0,0,canvas.width,canvas.height);}addEventListener("resize",resize);resize();
