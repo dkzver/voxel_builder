@@ -95,7 +95,8 @@ draw(model(0,-.65,0,130,.3,130),[.39,.37,.35]);
 terrain.forEach(t=>draw(model(t.x,t.y,t.z,t.r,t.r*.25,t.r,t.rot),t.color,oct));
 rocks.forEach(r=>draw(model(r.x,r.s*.5,r.z,r.s,r.s*.8,r.s,r.rot),r.color,oct));
 ores.forEach(n=>{if(n.available)draw(model(n.x,.85+Math.sin(now*.001+n.phase)*.12,n.z,.65,.85,.65,now*.0004+n.phase),[.25,.82,.69],oct);});
-baseModules.forEach(drawBaseModule);\nconst ry=state.yaw;draw(model(rover.x,1.0,rover.z,1.15,.28,1.55,ry),[.72,.74,.7]);draw(model(rover.x,1.55,rover.z-.2,.65,.36,.55,ry),[.12,.17,.22]);draw(model(rover.x,1.68,rover.z+1.05,1.9,.06,.65,ry),[.68,.48,.22]);
+baseModules.forEach(drawBaseModule);
+const ry=state.yaw;draw(model(rover.x,1.0,rover.z,1.15,.28,1.55,ry),[.72,.74,.7]);draw(model(rover.x,1.55,rover.z-.2,.65,.36,.55,ry),[.12,.17,.22]);draw(model(rover.x,1.68,rover.z+1.05,1.9,.06,.65,ry),[.68,.48,.22]);
 for(const side of [-1,1])for(const front of [-1,1])draw(model(rover.x+side*1.18,.48,rover.z+front*1.05,.2,.48,.48,ry),[.12,.15,.18]);
 }
 requestAnimationFrame(frame);
