@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07131d">
+  <title>Инвентарь — Лунная база</title>
+  <link rel="stylesheet" href="./styles/inventory.css">
+</head>
+<body>
+  <main class="inventory-shell">
+    <header class="topbar">
+      <a class="back-link" href="./index.html" aria-label="Вернуться в игру">← <span>В ИГРУ</span></a>
+      <div class="brand"><span class="brand-symbol">◈</span><div><b>ЛУННАЯ БАЗА</b><small>СИСТЕМА УПРАВЛЕНИЯ РЕСУРСАМИ</small></div></div>
+      <div class="status"><i></i> СИСТЕМА АКТИВНА <span>·</span> СЕКТОР 01</div>
+    </header>
+
+    <section class="page-heading">
+      <div><div class="eyebrow">PERSONAL STORAGE / 01</div><h1>ИНВЕНТАРЬ</h1><p>Грузовой отсек экспедиционного ровера и складские запасы базы.</p></div>
+      <div class="capacity-card"><span>ОБЩАЯ ЗАГРУЗКА</span><strong id="capacity-value">68.4 <small>/ 120 кг</small></strong><div class="capacity-track"><i style="width:57%"></i></div><small class="capacity-foot">57% · СВОБОДНО 51.6 КГ</small></div>
+    </section>
+
+    <section class="summary-grid" aria-label="Сводка ресурсов">
+      <article class="summary-card"><div class="summary-icon iron">Fe</div><div><small>ЖЕЛЕЗО</small><strong>32.5 <em>кг</em></strong><span>+4.2 кг за смену</span></div><b class="trend up">↗ 14%</b></article>
+      <article class="summary-card"><div class="summary-icon titanium">Ti</div><div><small>ТИТАН</small><strong>18.0 <em>кг</em></strong><span>+1.8 кг за смену</span></div><b class="trend up">↗ 8%</b></article>
+      <article class="summary-card"><div class="summary-icon silicon">Si</div><div><small>КРЕМНИЙ</small><strong>17.9 <em>кг</em></strong><span>+2.1 кг за смену</span></div><b class="trend up">↗ 11%</b></article>
+      <article class="summary-card credits"><div class="summary-icon credit">₡</div><div><small>КРЕДИТЫ</small><strong>2 450 <em>CR</em></strong><span>Баланс экспедиции</span></div><b class="trend neutral">—</b></article>
+    </section>
+
+    <section class="inventory-layout">
+      <div class="inventory-main">
+        <div class="section-bar"><div><div class="eyebrow">STORAGE CONTENTS</div><h2>СОДЕРЖИМОЕ ОТСЕКА</h2></div><div class="item-count"><b id="visible-count">8</b> ПОЗИЦИЙ</div></div>
+        <div class="toolbar">
+          <div class="tabs" role="tablist" aria-label="Категории инвентаря">
+            <button class="tab active" data-filter="all" role="tab" aria-selected="true">ВСЁ <span>08</span></button>
+            <button class="tab" data-filter="resource" role="tab" aria-selected="false">РЕСУРСЫ <span>03</span></button>
+            <button class="tab" data-filter="equipment" role="tab" aria-selected="false">ОБОРУДОВАНИЕ <span>03</span></button>
+            <button class="tab" data-filter="parts" role="tab" aria-selected="false">КОМПОНЕНТЫ <span>02</span></button>
+          </div>
+          <label class="search"><span>⌕</span><input id="item-search" type="search" placeholder="Поиск предметов…" autocomplete="off"></label>
+        </div>
+        <div class="item-grid" id="item-grid">
+          <button class="item-card selected" data-category="resource" data-name="Железная руда" data-amount="32.5 кг" data-description="Базовая металлическая руда. Используется для каркасов, креплений и ремонта модулей." data-code="ORE-FE-001"><span class="item-art ore-fe"><i></i><i></i><i></i></span><span class="item-type">СЫРЬЁ · Fe</span><b>Железная руда</b><span class="item-amount">32.5 <small>кг</small></span><span class="item-foot"><i class="dot iron"></i> Ресурс</span></button>
+          <button class="item-card" data-category="resource" data-name="Титановая руда" data-amount="18.0 кг" data-description="Лёгкий и прочный металл для несущих конструкций и высоконагруженных деталей." data-code="ORE-TI-002"><span class="item-art ore-ti"><i></i><i></i><i></i></span><span class="item-type">СЫРЬЁ · Ti</span><b>Титановая руда</b><span class="item-amount">18.0 <small>кг</small></span><span class="item-foot"><i class="dot titanium"></i> Ресурс</span></button>
+          <button class="item-card" data-category="resource" data-name="Кремниевый минерал" data-amount="17.9 кг" data-description="Минеральное сырьё для производства стекла, электроники и солнечных элементов." data-code="ORE-SI-003"><span class="item-art ore-si"><i></i><i></i><i></i></span><span class="item-type">СЫРЬЁ · Si</span><b>Кремниевый минерал</b><span class="item-amount">17.9 <small>кг</small></span><span class="item-foot"><i class="dot silicon"></i> Ресурс</span></button>
+          <button class="item-card" data-category="equipment" data-name="Геологический сканер" data-amount="1 шт." data-description="Переносной сканер для обнаружения минеральных залежей в радиусе экспедиции." data-code="EQ-SCAN-014"><span class="item-art device scanner"><i></i><i></i></span><span class="item-type">ИНСТРУМЕНТ · EQ</span><b>Геологический сканер</b><span class="item-amount">1 <small>шт.</small></span><span class="item-foot"><i class="dot cyan"></i> Оборудование</span></button>
+          <button class="item-card" data-category="equipment" data-name="Ремонтный манипулятор" data-amount="1 шт." data-description="Складной сервисный инструмент для обслуживания ровера и базовых конструкций." data-code="EQ-ARM-006"><span class="item-art device arm"><i></i><i></i></span><span class="item-type">ИНСТРУМЕНТ · EQ</span><b>Ремонтный манипулятор</b><span class="item-amount">1 <small>шт.</small></span><span class="item-foot"><i class="dot cyan"></i> Оборудование</span></button>
+          <button class="item-card" data-category="equipment" data-name="Буровой модуль" data-amount="1 шт." data-description="Сменный буровой блок для отбора образцов и разработки плотных пород." data-code="EQ-DRILL-021"><span class="item-art device drill"><i></i><i></i></span><span class="item-type">ИНСТРУМЕНТ · EQ</span><b>Буровой модуль</b><span class="item-amount">1 <small>шт.</small></span><span class="item-foot"><i class="dot cyan"></i> Оборудование</span></button>
+          <button class="item-card" data-category="parts" data-name="Энергоячейка" data-amount="4 шт." data-description="Стандартный накопитель энергии для автономных устройств и аварийного питания." data-code="PT-CELL-004"><span class="item-art component cell"><i></i></span><span class="item-type">КОМПОНЕНТ · PT</span><b>Энергоячейка</b><span class="item-amount">4 <small>шт.</small></span><span class="item-foot"><i class="dot violet"></i> Компонент</span></button>
+          <button class="item-card" data-category="parts" data-name="Оптический кабель" data-amount="25 м" data-description="Защищённая линия передачи данных для соединения оборудования и модулей базы." data-code="PT-FIBER-010"><span class="item-art component cable"><i></i></span><span class="item-type">КОМПОНЕНТ · PT</span><b>Оптический кабель</b><span class="item-amount">25 <small>м</small></span><span class="item-foot"><i class="dot violet"></i> Компонент</span></button>
+        </div>
+        <div class="empty-state hidden" id="empty-state">ПОЗИЦИИ НЕ НАЙДЕНЫ<br><small>Измените запрос или категорию.</small></div>
+      </div>
+
+      <aside class="details-panel">
+        <div class="details-head"><div><div class="eyebrow">ITEM INSPECTOR</div><h2>КАРТОЧКА ПРЕДМЕТА</h2></div><span class="scan-mark">⌗</span></div>
+        <div class="detail-art" id="detail-art"><span class="detail-glow"></span><span class="detail-symbol">Fe</span><span class="detail-grid"></span></div>
+        <div class="detail-category" id="detail-category">СЫРЬЁ · Fe</div>
+        <h3 id="detail-name">Железная руда</h3>
+        <p id="detail-description">Базовая металлическая руда. Используется для каркасов, креплений и ремонта модулей.</p>
+        <div class="detail-data"><div><span>КОЛИЧЕСТВО</span><b id="detail-amount">32.5 кг</b></div><div><span>КОД ПРЕДМЕТА</span><b id="detail-code">ORE-FE-001</b></div><div><span>СОСТОЯНИЕ</span><b class="condition"><i></i> СТАБИЛЬНО</b></div></div>
+        <div class="detail-actions"><button class="action-primary" type="button" disabled>ПЕРЕМЕСТИТЬ <span>↗</span></button><button class="action-secondary" type="button" disabled>ИСПОЛЬЗОВАТЬ</button><small>ДЕЙСТВИЯ БУДУТ ДОСТУПНЫ В ИГРЕ</small></div>
+      </aside>
+    </section>
+    <footer class="footer"><span>ORBITAL SYSTEMS <b>／</b> INVENTORY MODULE v0.1</span><span>ЛОКАЛЬНЫЙ МАКЕТ · ДАННЫЕ ДЕМОНСТРАЦИОННЫЕ</span></footer>
+  </main>
+  <script src="./src/inventory.js"></script>
+</body>
+</html>
