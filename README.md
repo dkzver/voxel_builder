@@ -125,3 +125,13 @@ Validation: JavaScript source passed a syntax parse check. The scene has not yet
 - Поворот на 90°, отмена режима размещения и удаление выделенного объекта.
 - Отдельная страница construction.html использует те же src/main.js и styles/main.css.
 - Локальное сохранение построек остаётся в localStorage.
+
+
+## Документация проекта
+
+- [Полный бриф игры](GAME_BRIEF.md)
+- [Индекс документации](docs/README.md)
+- [Построение мира и сцены](docs/WORLD_AND_SCENE.md)
+- [Система строительства](docs/BUILDING_SYSTEM.md)
+- [Управление луноходом](docs/ROVER_CONTROL.md)
+- [Техническая архитектура и дорожная карта](docs/TECHNICAL_ROADMAP.md)
