@@ -44,3 +44,15 @@ Branch: `stage/03-voxel-diorama-fixed-camera`.
 - New base layout is initialized only when no previous local save exists; existing local constructions are preserved.
 
 This is an incremental visual foundation pass, not yet a finished asset-quality recreation of the Sketchfab reference. Detailed voxel terrain, bespoke props, lighting and environmental set dressing remain planned work.
+
+
+## Stage 04 — detailed voxel spaceport
+Branch: `stage/04-detailed-voxel-spaceport`.
+- Reworked the starter outpost with multi-part habitat, solar array, storage and laboratory details.
+- Added a landing apron with perimeter lights, service tanks, connecting pipes, communication mast, service gantry, supply crates, walkway and rover parking bay.
+- Replaced the infinite ground slab with a finite tiled voxel plateau and a stepped asteroid rim.
+- Repositioned terrain rocks and mineral deposits onto the playable asteroid instead of scattering them through empty space.
+- Existing saved base layouts remain intact; an empty or missing save initializes the starter outpost.
+- Camera remains fixed-angle and follows the rover without mouse rotation.
+
+Validation: JavaScript source passed a syntax parse check. The scene has not yet been visually tested in a browser; rendering quality and performance still need in-browser QA.
