@@ -60,3 +60,6 @@ body[data-builder="true"] #build-modal{display:block!important}
 .placement-dot{width:9px;height:9px;border-radius:50%;background:#8bea65;box-shadow:0 0 12px currentColor}
 @media(max-width:760px){#player-buildings{bottom:8px;width:calc(100vw - 16px);padding:9px}.owned-building{min-width:125px}.placement-hint{top:65px;width:calc(100vw - 24px);justify-content:center;flex-wrap:wrap}.placement-hint span{width:100%;text-align:center;margin:0}.build-catalog{grid-template-columns:1fr;max-height:60vh}}
 body[data-builder="true"] #build-modal{display:grid!important}
+
+body[data-builder="true"] #build-modal:not(.hidden){display:grid!important}
+body[data-builder="true"] #build-modal.hidden{display:none!important}
