@@ -11,7 +11,7 @@ Browser-based lunar rover prototype using plain HTML, CSS, JavaScript and native
 ## Controls
 - W / S — drive forward / reverse
 - A / D — steer
-- Mouse — camera look (click canvas to lock pointer)
+- Camera — fixed isometric angle, smoothly follows the rover; mouse does not rotate it
 - E — mine a nearby mineral deposit
 - Esc — pause/resume
 
@@ -34,3 +34,13 @@ Branch: `stage/02-base-building`.
 - Prevents placements overlapping a neighboring occupied grid cell.
 - Demolish the closest structure within 8 units.
 - Base layout is stored locally in browser `localStorage` under `lunar-base-modules-v1`. No backend is used.
+
+
+## Stage 03 — voxel diorama and fixed camera
+Branch: `stage/03-voxel-diorama-fixed-camera`.
+- Camera follows the rover smoothly with a constant world-space offset, angle and height.
+- Mouse look and pointer lock are disabled.
+- A starter outpost is present from the first launch: habitat, solar array, storage and lab.
+- New base layout is initialized only when no previous local save exists; existing local constructions are preserved.
+
+This is an incremental visual foundation pass, not yet a finished asset-quality recreation of the Sketchfab reference. Detailed voxel terrain, bespoke props, lighting and environmental set dressing remain planned work.
