@@ -57,7 +57,6 @@ const cameraFollow={x:0,z:-.7};
 const rover={x:0,z:-.7};let wheelTravel=0;const roverParts={bucketAngle:-.18};
 // === Player construction: catalog modal -> world placement -> owned buildings dock ===
 const moduleCatalog={
- habitat:{label:"Жилой модуль",color:[.72,.76,.72],size:[1.45,1.05,1.45]},
  solar:{label:"Солнечная панель",color:[.2,.42,.72],size:[1.55,.12,1.25]},
  storage:{label:"Склад ресурсов",color:[.68,.48,.28],size:[1.25,.85,1.25]},
  lab:{label:"Лаборатория",color:[.58,.68,.76],size:[1.35,1,1.35]},
@@ -65,7 +64,7 @@ const moduleCatalog={
  landing:{label:"Посадочная площадка",color:[.68,.72,.68],size:[2.5,.12,2.5]},
  factory:{label:"Завод",color:[.72,.48,.28],size:[1.75,1.15,1.75]}
 };
-const buildSizes={solar:"3.1 × 2.5 м",storage:"2.5 × 2.5 м",lab:"2.7 × 2.7 м",habitat:"2.9 × 2.9 м",comms:"3 × 3 м",landing:"5 × 5 м",factory:"3.5 × 3.5 м"};
+const buildSizes={solar:"3.1 × 2.5 м",storage:"2.5 × 2.5 м",lab:"2.7 × 2.7 м",comms:"3 × 3 м",landing:"5 × 5 м",factory:"3.5 × 3.5 м"};
 let selectedModule="solar",moduleRotation=0,pendingPlacement=false,selectedBuildingId=null,previewWorld=null,previewValid=false;
 let baseModules=[];
 try{
@@ -145,14 +144,35 @@ function placePendingModule(){
  baseModules.push(m);selectedBuildingId=m.id;persistBase();refreshBuildingDock();pendingPlacement=false;previewWorld=null;
  showPlacementHint(false);showToast(moduleCatalog[m.type].label+" построена");
 }
-function pickBuilding(p){
- if(!p)return null;let best=null,bestScore=Infinity;
- for(const m of baseModules){const f=footprint(m.type,m.rotation||0),dx=Math.abs(p.x-m.x),dz=Math.abs(p.z-m.z);if(dx<=f.x/2+.35&&dz<=f.z/2+.35){const score=dx+dz;if(score<bestScore){best=m;bestScore=score;}}}
- return best;
+function projectToCanvas(x,y,z){
+ const m=viewProjection,cx=m[0]*x+m[4]*y+m[8]*z+m[12],cy=m[1]*x+m[5]*y+m[9]*z+m[13],cw=m[3]*x+m[7]*y+m[11]*z+m[15];
+ if(cw<=.001)return null;
+ const r=canvas.getBoundingClientRect();
+ return {x:r.left+(cx/cw+1)*.5*r.width,y:r.top+(1-cy/cw)*.5*r.height,depth:cw};
+}
+function buildingScreenBounds(building){
+ const f=footprint(building.type,building.rotation||0),ground=terrainTop(building.x,building.z);
+ const heights={solar:.9,storage:2.05,lab:2.3,comms:3.5,landing:.45,factory:2.7};
+ const halfX=f.x/2+.3,halfZ=f.z/2+.3,top=heights[building.type]||2;
+ const points=[];
+ for(const dx of [-halfX,halfX])for(const dz of [-halfZ,halfZ])for(const y of [ground,ground+top]){
+  const c=Math.cos(building.rotation||0),sn=Math.sin(building.rotation||0),x=building.x+dx*c-dz*sn,z=building.z+dx*sn+dz*c,p=projectToCanvas(x,y,z);if(p)points.push(p);
+ }
+ if(!points.length)return null;
+ return {left:Math.min(...points.map(p=>p.x))-9,right:Math.max(...points.map(p=>p.x))+9,top:Math.min(...points.map(p=>p.y))-9,bottom:Math.max(...points.map(p=>p.y))+9,depth:Math.min(...points.map(p=>p.depth))};
+}
+function pickBuildingAtScreen(clientX,clientY){
+ let found=null,best=Infinity;
+ for(const m of baseModules){
+  const b=buildingScreenBounds(m);if(!b||clientX<b.left||clientX>b.right||clientY<b.top||clientY>b.bottom)continue;
+  const cx=(b.left+b.right)/2,cy=(b.top+b.bottom)/2,score=Math.hypot((clientX-cx)/Math.max(12,(b.right-b.left)/2),(clientY-cy)/Math.max(12,(b.bottom-b.top)/2))+b.depth*.0001;
+  if(score<best){best=score;found=m;}
+ }
+ return found;
 }
 canvas.addEventListener("pointermove",e=>{if(!pendingPlacement)return;previewWorld=pointerWorld(e);const check=validBuildPosition(previewWorld,selectedModule,moduleRotation);previewValid=check.ok;setPlacementMessage(check.reason,check.ok);});
 canvas.addEventListener("pointerdown",e=>{
- if(!pendingPlacement){const p=pointerWorld(e),hit=pickBuilding(p);if(hit){selectedBuildingId=hit.id;refreshBuildingDock();showToast(moduleCatalog[hit.type].label+" выбрана");}return;}
+ if(!pendingPlacement){const hit=pickBuildingAtScreen(e.clientX,e.clientY);if(hit){selectedBuildingId=hit.id;refreshBuildingDock();showToast(moduleCatalog[hit.type].label+" выбрана");}return;}
  previewWorld=pointerWorld(e);const check=validBuildPosition(previewWorld,selectedModule,moduleRotation);previewValid=check.ok;setPlacementMessage(check.reason,check.ok);if(check.ok)placePendingModule();
 });
 addEventListener("keydown",e=>{
