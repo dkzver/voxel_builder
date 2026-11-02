@@ -164,6 +164,17 @@ function showToast(s){toast.textContent=s;toast.style.opacity="1";clearTimeout(t
 function start(){state.running=true;state.paused=false;keys.clear();rover.x=0;rover.z=-.7;cameraFollow.x=rover.x;cameraFollow.z=rover.z;state.yaw=Math.PI;state.targetYaw=Math.PI;state.direction=2;state.velocity=0;departure.active=true;departure.elapsed=0;departure.door=0;menu.classList.add("hidden");pause.classList.add("hidden");settings.classList.add("hidden");document.querySelector("#objective").textContent="Выезд из ангара: автоматическая последовательность";showToast("Открывается гараж. Подготовка к выезду…");}
 function togglePause(){if(!state.running)return;state.paused=!state.paused;pause.classList.toggle("hidden",!state.paused);}
 function quit(){state.running=false;state.paused=false;departure.active=false;keys.clear();pause.classList.add("hidden");menu.classList.remove("hidden");}
+function updateOreRadar(){
+ const c=document.querySelector("#radar-canvas");if(!c)return;const ctx=c.getContext("2d"),w=c.width,h=c.height,cx=w/2,cy=h/2,range=32,scale=w/(range*2);
+ ctx.clearRect(0,0,w,h);ctx.fillStyle="#101a28";ctx.fillRect(0,0,w,h);ctx.strokeStyle="#ffffff18";ctx.lineWidth=1;
+ for(let r=16;r<=32;r+=16){ctx.beginPath();ctx.arc(cx,cy,r*scale,0,Math.PI*2);ctx.stroke();}
+ ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,h);ctx.moveTo(0,cy);ctx.lineTo(w,cy);ctx.stroke();
+ let count=0;
+ for(const n of ores){if(!n.available)continue;count++;const x=cx+(n.x-rover.x)*scale,y=cy+(n.z-rover.z)*scale;if(x<4||x>w-4||y<4||y>h-4)continue;ctx.fillStyle=n.resource.id==="iron"?"#b86e49":n.resource.id==="titanium"?"#94aebe":"#d1b75b";ctx.beginPath();ctx.arc(x,y,4.2,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#ffffff99";ctx.stroke();}
+ for(const m of baseModules){const x=cx+(m.x-rover.x)*scale,y=cy+(m.z-rover.z)*scale;ctx.fillStyle="#b7f36b";ctx.fillRect(x-2,y-2,4,4);}
+ ctx.fillStyle="#ffffff";ctx.beginPath();ctx.moveTo(cx,cy-7);ctx.lineTo(cx-5,cy+5);ctx.lineTo(cx+5,cy+5);ctx.closePath();ctx.fill();
+ const label=document.querySelector("#radar-count");if(label)label.textContent=count;
+}
 function updateInventoryUI(){
  const total=state.inventory.iron+state.inventory.titanium+state.inventory.silicon;
  document.querySelector("#ore").textContent=total;
@@ -216,7 +227,7 @@ if(state.running&&!state.paused){
   document.querySelector("#speed").textContent=Math.round(Math.abs(state.velocity)*3.6);if(forward!==0)state.energy=Math.max(0,state.energy-dt*.035);document.querySelector("#energy").textContent=Math.round(state.energy);
  }
 }
-cameraFollow.x+=(rover.x-cameraFollow.x)*Math.min(1,dt*5);cameraFollow.z+=(rover.z-cameraFollow.z)*Math.min(1,dt*5);const eye=[cameraFollow.x+15,20,cameraFollow.z+17],center=[cameraFollow.x,0.8,cameraFollow.z];viewProjection=mul(perspective(Math.PI/4.2,canvas.width/canvas.height,.1,260),lookAt(eye,center));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+updateOreRadar();cameraFollow.x+=(rover.x-cameraFollow.x)*Math.min(1,dt*5);cameraFollow.z+=(rover.z-cameraFollow.z)*Math.min(1,dt*5);const eye=[cameraFollow.x+15,20,cameraFollow.z+17],center=[cameraFollow.x,0.8,cameraFollow.z];viewProjection=mul(perspective(Math.PI/4.2,canvas.width/canvas.height,.1,260),lookAt(eye,center));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 // The playable ground is assembled from voxel tiles; no infinite flat plane.
 voxelBatches.forEach(b=>draw(matIdentity(),b.color,b.geometry));
 asteroidRim.forEach(r=>draw(model(r.x,r.h*.38,r.z,1.55,r.h,r.h*.92,r.rot),r.color));
