@@ -1,35 +1,28 @@
-# Лунная База
+# Лунная База — автономный статичный проект
 
-Browser-based 3D lunar exploration prototype (HTML/CSS/JavaScript + Three.js).
+Browser-based lunar rover prototype using plain HTML, CSS, JavaScript and native WebGL.
 
-## Stage 01 — lunar world and rover
-
-Implemented in `stage/01-lunar-world-rover`:
-- Third-person 3D camera and a blockout lunar rover.
-- Procedural low-poly rocky landscape and collectible mineral deposits.
-- Keyboard rover driving, mouse camera look, basic energy and ore HUD.
-- Main menu, pause menu, and adjustable mouse sensitivity / rover speed.
+## Offline / static mode
+- No backend server, account service, or game server is needed.
+- No external CDN or library import is used. Rendering is implemented directly using WebGL.
+- The app can be hosted as static files (GitHub Pages, static hosting) or opened locally. For browser security, some browsers may restrict pointer lock or scripts when opening via file://; if that happens, use any local static file server. This server only serves files and is not a game backend.
+- No network connection is required after obtaining the project files.
 
 ## Controls
-- `W` / `S` — forward / reverse
-- `A` / `D` — steering
-- Mouse — camera look (click the canvas to lock pointer)
-- `E` — mine nearby mineral node
-- `Esc` — pause / resume
+- W / S — drive forward / reverse
+- A / D — steer
+- Mouse — camera look (click canvas to lock pointer)
+- E — mine a nearby mineral deposit
+- Esc — pause/resume
 
-## Run locally
-The project uses ES modules and imports Three.js from jsDelivr CDN. Start a local static server in repository root:
-
-```bash
-python -m http.server 8000
-```
-
-Open `http://localhost:8000` in a modern browser. Internet connection is needed for the CDN dependency.
+## Stage 01 contents
+- Third-person rover blockout, simple WebGL rendering, lunar ground, rocks and mineral pickups
+- HUD for speed, energy and collected resources
+- Main menu, pause and adjustable settings
 
 ## Roadmap
-- Stage 01: playable rover and lunar environment blockout.
-- Stage 02: base construction and interactive modules.
-- Stage 03: resource inventory, mining tools, crafting and progression.
-- Stage 04: persistence, polish and validation.
+- Stage 02: modular base placement and interactions
+- Stage 03: inventory, mining tools, crafting and progression
+- Stage 04: local save system (IndexedDB), polish and QA
 
-This is an initial playable prototype, not yet the full feature-complete game.
+This is an early playable prototype; it does not yet include the complete base-building or persistence features.
