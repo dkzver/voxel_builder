@@ -27,8 +27,9 @@ const terrain=[],rocks=[],ores=[];
 for(let i=0;i<115;i++){const r=1+rand()*4.8;terrain.push({x:(rand()-.5)*170,z:(rand()-.5)*170,r,y:.12+rand()*.5,rot:rand()*6,color:[.31+rand()*.13,.30+rand()*.13,.29+rand()*.12]});}
 for(let i=0;i<170;i++){const s=.2+rand()*1.0;rocks.push({x:(rand()-.5)*160,z:(rand()-.5)*160,s,color:[.42+rand()*.12,.4+rand()*.12,.38+rand()*.12],rot:rand()*6});}
 for(let i=0;i<22;i++){let x=(rand()-.5)*100,z=(rand()-.5)*100;if(Math.hypot(x,z)<10)x+=18;ores.push({x,z,available:true,phase:rand()*6});}
-const state={running:false,paused:false,energy:100,ore:0,yaw:0,velocity:0,maxSpeed:12,sensitivity:.5,camYaw:0};
-const rover={x:0,z:0};
+const state={running:false,paused:false,energy:100,ore:0,yaw:0,velocity:0,maxSpeed:12,sensitivity:.5};
+const cameraFollow={x:0,z:0};
+const rover={x:0,z:10};
 // === Base construction system: static-client only, persisted in localStorage ===
 const moduleCatalog={
  habitat:{label:"Жилой модуль",color:[.72,.76,.72],size:[1.45,1.05,1.45]},
@@ -38,7 +39,7 @@ const moduleCatalog={
 };
 let selectedModule="habitat",moduleRotation=0;
 let baseModules=[];
-try{const saved=JSON.parse(localStorage.getItem("lunar-base-modules-v1")||"[]");if(Array.isArray(saved))baseModules=saved.filter(m=>moduleCatalog[m.type]&&Number.isFinite(m.x)&&Number.isFinite(m.z));}catch(_){baseModules=[];}
+try{const saved=JSON.parse(localStorage.getItem("lunar-base-modules-v1")||"null");if(Array.isArray(saved))baseModules=saved.filter(m=>moduleCatalog[m.type]&&Number.isFinite(m.x)&&Number.isFinite(m.z));else baseModules=[{id:"starter-habitat",type:"habitat",x:0,z:0,rotation:0},{id:"starter-solar-a",type:"solar",x:-5,z:0,rotation:0},{id:"starter-storage",type:"storage",x:4,z:0,rotation:0},{id:"starter-lab",type:"lab",x:0,z:-5,rotation:0}];}catch(_){baseModules=[{id:"starter-habitat",type:"habitat",x:0,z:0,rotation:0},{id:"starter-solar-a",type:"solar",x:-5,z:0,rotation:0},{id:"starter-storage",type:"storage",x:4,z:0,rotation:0},{id:"starter-lab",type:"lab",x:0,z:-5,rotation:0}];}
 function persistBase(){try{localStorage.setItem("lunar-base-modules-v1",JSON.stringify(baseModules));}catch(_){showToast("Не удалось сохранить базу (storage unavailable)");}}
 function updateBuildCount(){const el=document.querySelector("#build-count");if(el)el.textContent="Построек: "+baseModules.length;}
 function selectModule(type){if(!moduleCatalog[type])return;selectedModule=type;document.querySelectorAll(".module-choice").forEach(b=>b.classList.toggle("active",b.dataset.module===type));}
@@ -73,12 +74,12 @@ if(m.type==="habitat"){
 updateBuildCount();
 
 const keys=new Set();addEventListener("keydown",e=>{keys.add(e.code);if(["Space","ArrowUp","ArrowDown"].includes(e.code))e.preventDefault();if(e.code==="Escape")togglePause();if(e.code==="KeyE"&&state.running&&!state.paused)mine();});addEventListener("keyup",e=>keys.delete(e.code));
-canvas.addEventListener("click",()=>{if(state.running&&!state.paused)canvas.requestPointerLock?.();});addEventListener("mousemove",e=>{if(document.pointerLockElement===canvas&&state.running&&!state.paused)state.camYaw-=e.movementX*.002*state.sensitivity;});
+// Fixed isometric camera: no mouse look and no pointer lock.
 const menu=document.querySelector("#menu"),pause=document.querySelector("#pause"),settings=document.querySelector("#settings"),toast=document.querySelector("#toast");let toastTimer;
 function showToast(s){toast.textContent=s;toast.style.opacity="1";clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.style.opacity="0",1700);}
-function start(){state.running=true;state.paused=false;menu.classList.add("hidden");pause.classList.add("hidden");settings.classList.add("hidden");canvas.requestPointerLock?.();document.querySelector("#objective").textContent="Найдите залежи минералов и добудьте ресурсы";}
-function togglePause(){if(!state.running)return;state.paused=!state.paused;pause.classList.toggle("hidden",!state.paused);if(state.paused)document.exitPointerLock?.();else canvas.requestPointerLock?.();}
-function quit(){state.running=false;state.paused=false;pause.classList.add("hidden");menu.classList.remove("hidden");document.exitPointerLock?.();}
+function start(){state.running=true;state.paused=false;menu.classList.add("hidden");pause.classList.add("hidden");settings.classList.add("hidden");document.querySelector("#objective").textContent="Найдите залежи минералов и добудьте ресурсы";}
+function togglePause(){if(!state.running)return;state.paused=!state.paused;pause.classList.toggle("hidden",!state.paused);}
+function quit(){state.running=false;state.paused=false;pause.classList.add("hidden");menu.classList.remove("hidden");}
 function mine(){let nearest=null,distance=4.8;ores.forEach(n=>{const d=Math.hypot(n.x-rover.x,n.z-rover.z);if(n.available&&d<distance){nearest=n;distance=d;}});if(!nearest){showToast("Нет залежей поблизости");return;}nearest.available=false;state.ore+=12;state.energy=Math.max(0,state.energy-3);document.querySelector("#ore").textContent=state.ore;document.querySelector("#energy").textContent=Math.round(state.energy);showToast("+12 кг минералов");document.querySelector("#objective").textContent=state.ore>=60?"Цель выполнена: ресурсы собраны":"Продолжайте сбор минералов";}
 document.querySelector("#start-btn").onclick=start;document.querySelector("#resume-btn").onclick=togglePause;document.querySelector("#quit-btn").onclick=quit;
 document.querySelector("#settings-btn").onclick=()=>{menu.classList.add("hidden");settings.classList.remove("hidden");};document.querySelector("#settings-back").onclick=()=>{settings.classList.add("hidden");menu.classList.remove("hidden");};
@@ -90,7 +91,7 @@ gl.enable(gl.DEPTH_TEST);gl.clearColor(.035,.05,.085,1);
 let previous=performance.now();
 function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous)/1000,.05);previous=now;
 if(state.running&&!state.paused){const forward=(keys.has("KeyW")||keys.has("ArrowUp")?1:0)-(keys.has("KeyS")||keys.has("ArrowDown")?1:0),turn=(keys.has("KeyD")?1:0)-(keys.has("KeyA")?1:0);state.yaw+=turn*dt*(Math.abs(state.velocity)>.1?1.55:1.1);const target=forward*state.maxSpeed;state.velocity+=(target-state.velocity)*(1-Math.exp(-(forward?2.2:3.3)*dt));rover.x-=Math.sin(state.yaw)*state.velocity*dt*.42;rover.z-=Math.cos(state.yaw)*state.velocity*dt*.42;document.querySelector("#speed").textContent=Math.round(Math.abs(state.velocity)*3.6);if(Math.abs(state.velocity)>.1)state.energy=Math.max(0,state.energy-dt*.035);document.querySelector("#energy").textContent=Math.round(state.energy);}
-const cy=state.yaw+state.camYaw,eye=[rover.x+Math.sin(cy)*9,5.4,rover.z+Math.cos(cy)*9],center=[rover.x,1.1,rover.z];viewProjection=mul(perspective(Math.PI/3.1,canvas.width/canvas.height,.1,220),lookAt(eye,center));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+cameraFollow.x+=(rover.x-cameraFollow.x)*Math.min(1,dt*5);cameraFollow.z+=(rover.z-cameraFollow.z)*Math.min(1,dt*5);const eye=[cameraFollow.x+15,20,cameraFollow.z+17],center=[cameraFollow.x,0.8,cameraFollow.z];viewProjection=mul(perspective(Math.PI/4.2,canvas.width/canvas.height,.1,260),lookAt(eye,center));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 draw(model(0,-.65,0,130,.3,130),[.39,.37,.35]);
 terrain.forEach(t=>draw(model(t.x,t.y,t.z,t.r,t.r*.25,t.r,t.rot),t.color,oct));
 rocks.forEach(r=>draw(model(r.x,r.s*.5,r.z,r.s,r.s*.8,r.s,r.rot),r.color,oct));
